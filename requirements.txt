@@ -1,8 +1,10 @@
 tortoise-orm[accel]
+uvicorn[standard]
 python-dotenv
 pycryptodome
 pyrogram
 tgcrypto
 pydantic
+fastapi
 loguru
 pbkdf2

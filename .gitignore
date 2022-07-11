@@ -1,5 +1,5 @@
 **/__pycache__
 *.session*
-db.sqlite
+db.sqlite*
 .idea
 .env

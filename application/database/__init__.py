@@ -1,10 +1,12 @@
+from fastapi import FastAPI
 from tortoise import Tortoise
+from tortoise.contrib.fastapi import register_tortoise
 from tortoise.exceptions import DBConnectionError
 
 from application.config.settings import Settings
 
 
-async def setup_database(settings: Settings):
+async def setup_database(app: FastAPI, settings: Settings):
     config = {
         "connections": {
             "default": {
@@ -35,13 +37,15 @@ async def setup_database(settings: Settings):
     }
 
     try:
-        await Tortoise.init(
-            config=config
-        )
+        await Tortoise.init(config=config)
     except DBConnectionError:
-        await Tortoise.init(
-            config=config,
-            _create_db=True
-        )
+        await Tortoise.init(config=config, _create_db=True)
 
-    await Tortoise.generate_schemas()
+    # await Tortoise.generate_schemas()
+
+    register_tortoise(
+        app,
+        config=config,
+        generate_schemas=True,
+        add_exception_handlers=True,
+    )

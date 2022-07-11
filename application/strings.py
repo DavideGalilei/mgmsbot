@@ -1,4 +1,4 @@
-from typing import Union, List, Tuple, NamedTuple
+from typing import Union, List, NamedTuple
 
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 
@@ -38,7 +38,9 @@ strings = {
         "start": lambda message, lang: {
             "en": {
                 "text": "Welcome to this bot! Use me inline",
-                "keyboard": _(Button("@ try me", "switch_inline_query_current_chat", "")),
+                "keyboard": _(
+                    Button("@ try me", "switch_inline_query_current_chat", "")
+                ),
             }
         }.get(lang, "en"),
     }

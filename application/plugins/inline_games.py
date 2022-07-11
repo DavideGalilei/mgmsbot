@@ -3,13 +3,13 @@ import json
 from uuid import uuid4
 
 from pyrogram import Client
-from pyrogram.types import InlineQuery, CallbackQuery
 from pyrogram.raw.functions.messages import SetInlineBotResults
 from pyrogram.raw.types import (
     InputBotInlineResultGame,
     InlineBotSwitchPM,
     InputBotInlineMessageGame,
 )
+from pyrogram.types import InlineQuery, CallbackQuery
 
 from application.config.config import shared
 from application.utils.encryption import encrypt

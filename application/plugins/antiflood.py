@@ -1,12 +1,10 @@
-import time
 import asyncio
-
-from typing import Union
+import time
 from collections import defaultdict
+from typing import Union
 
 from pyrogram import Client, filters
 from pyrogram.types import Message
-
 
 FLOODERS = filters.user()
 
@@ -51,9 +49,7 @@ async def cleaner(
 ):
     while not await asyncio.sleep(sleep):
         for user, messages in users.copy().items():
-            check = list(
-                filter(lambda x: time.time() - int(x) < seconds, users[user])
-            )
+            check = list(filter(lambda x: time.time() - int(x) < seconds, users[user]))
             if not check:
                 del users[user]
 
