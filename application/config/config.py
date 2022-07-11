@@ -1,14 +1,14 @@
-import os
+from pyrogram import Client
+
+from application.protocol.rooms import RoomManager
 
 
 class _Config:
     SALT: bytes
     SECRET: str
 
+    bot: Client
+    manager: RoomManager
+
 
 shared = _Config()
-shared.SALT = bytes.fromhex(os.getenv("SALT"))
-shared.SECRET = os.getenv("SECRET")
-
-assert shared.SALT is not None, "shared.SALT is None"
-assert shared.SECRET is not None, "shared.SECRET is None"
