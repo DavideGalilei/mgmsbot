@@ -49,3 +49,6 @@ async def cache_cleaner(cache: Cache, lifespan: int):
         for user_id in list(cache.keys()):
             if cache.c[user_id].timestamp < time.time() - lifespan:
                 cache.pop(user_id)
+
+
+asyncio.get_event_loop().create_task(Cache.start_workers())

@@ -7,18 +7,15 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>{{ game_name }}</title>
 
-    <link href="{{ url_for('static', path='/game/style.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', path=css_path) }}" rel="stylesheet">
 
     <script src="{{ url_for('static', path='/multiplayer.js') }}"></script>
-    <script src="{{ url_for('static', path='/game/script.js') }}"></script>
+    <script src="{{ url_for('static', path=js_path) }}"></script>
 </head>
 <body>
-<label for="input">Text:</label>
-<input type="text" id="input" name="text">
-<button id="send">send</button>
-
-<div id="messages">
-
-</div>
+    <p id="count">Online users: 1</p>
+    <div id="players">
+        <!-- A list of users is shown here -->
+    </div>
 </body>
 </html>

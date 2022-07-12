@@ -14,10 +14,12 @@ _db_cache = Cache({}, timeout=60 * 3)
 async def auto_command(_: Client, msg: Message):
     if msg.from_user and msg.from_user.id not in _db_cache:
         user = await User.update_or_create(
-            defaults=dict(user_id=msg.from_user.id),
-            name=msg.from_user.first_name,
-            last_name=msg.from_user.last_name,
-            language=msg.from_user.language_code or "en",
+            defaults=dict(
+                name=msg.from_user.first_name,
+                last_name=msg.from_user.last_name,
+                language=msg.from_user.language_code or "en",
+            ),
+            user_id=msg.from_user.id,
         )
         _db_cache[msg.from_user.id] = user
 

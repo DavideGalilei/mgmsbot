@@ -4,10 +4,12 @@ from collections import defaultdict
 from typing import Dict, Optional
 
 from fastapi import WebSocket
+from loguru import logger
 from pyrogram import Client
 from pyrogram.types import User, CallbackQuery
 from starlette.websockets import WebSocketState
 
+from application.config.available_games import AVAILABLE_GAMES
 from application.protocol.protocol import Payload
 from application.utils.cache import Cache
 
@@ -77,9 +79,10 @@ class Room:
 
 
 class RoomManager:
+    rooms = defaultdict(lambda: {"lock": SuperLock(), "chats": {}})
+
     def __init__(self, bot: Client):
         self.bot = bot
-        self.rooms = defaultdict(lambda: {"lock": SuperLock(), "chats": {}})
 
     async def get_game_room(self, query: CallbackQuery) -> Room:
         rooms = self.rooms[query.game_short_name]
@@ -91,3 +94,17 @@ class RoomManager:
         await room.add_player(Player(query.from_user, playing=False))
 
         return room
+
+    @classmethod
+    async def inactive_cleaner(cls, every_seconds: int):
+        while not await asyncio.sleep(every_seconds):
+            for game in AVAILABLE_GAMES:
+                if game in cls.rooms:
+                    async with cls.rooms[game]["lock"]:
+                        for chat in list(cls.rooms[game]["chats"].keys()):
+                            if not len(cls.rooms[game]["chats"][chat].connections):
+                                logger.info("Cleaned inactive chat (game={game}, {chat})", chat=chat, game=game)
+                                cls.rooms[game]["chats"].pop(chat)
+
+
+asyncio.get_event_loop().create_task(RoomManager.inactive_cleaner(every_seconds=2 * 60))

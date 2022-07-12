@@ -27,7 +27,7 @@ from application.webapp.routes.game import game_router
 root = Path(__file__).parent.resolve(strict=True)
 static = (root / "application" / "webapp" / "static").resolve(strict=True)
 
-FMT = "[{time}] [<bold>{level: <8}</bold>] - {name}:{function}:{line} - <level>{message}</level>"
+FMT = "[{time}] [<bold>{level}</bold>] - {name}:{function}:{line} - <level>{message}</level>"
 
 
 async def main():
@@ -95,7 +95,6 @@ async def main():
     ).start()
 
     shared.manager = RoomManager(bot)
-    await Cache.start_workers()
 
     while True:
         await asyncio.sleep(600)

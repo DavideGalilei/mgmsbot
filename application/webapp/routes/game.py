@@ -28,10 +28,12 @@ async def serve_game(request: Request, game_name: str, d: str):
     # await shared.bot.send_message(decrypted["i"], "Opened game")
 
     return templates.TemplateResponse(
-        "game/index.jinja2",
+        f"{game_name}/index.jinja2",
         {
             "request": request,
             "game_name": AVAILABLE_GAMES[game_name].name,
+            "css_path": f"/{game_name}/style.css",
+            "js_path": f"/{game_name}/script.js",
         },
     )
 

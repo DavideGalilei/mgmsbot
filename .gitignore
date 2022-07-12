@@ -1,3 +1,4 @@
+unknown_errors.txt
 **/__pycache__
 *.session*
 db.sqlite*
