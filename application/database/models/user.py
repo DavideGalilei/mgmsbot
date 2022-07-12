@@ -11,6 +11,7 @@ class User(Model):
 
     user_id = fields.BigIntField(pk=True)
     name = fields.TextField(null=True)
+    last_name = fields.TextField(null=True)
 
     blocked = fields.BooleanField(default=False, null=False)
     deleted = fields.BooleanField(default=False, null=False)

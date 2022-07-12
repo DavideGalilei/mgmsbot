@@ -5,11 +5,11 @@ from typing import Dict, Optional
 
 from fastapi import WebSocket
 from pyrogram import Client
-from pyrogram.raw.types import User
-from pyrogram.types import CallbackQuery
+from pyrogram.types import User, CallbackQuery
 from starlette.websockets import WebSocketState
 
 from application.protocol.protocol import Payload
+from application.utils.cache import Cache
 
 
 class SuperLock:
@@ -27,8 +27,9 @@ class SuperLock:
 
 
 class Player:
-    def __init__(self, user: User):
+    def __init__(self, user: User, playing: bool = False):
         self.user = user
+        self.is_playing = playing
         self.connection: Optional[WebSocket] = None
 
     def set_conn(self, websocket: WebSocket):
@@ -46,15 +47,21 @@ class Room:
         self.chat_instance = chat_instance
         self.lock = SuperLock()
         self.connections: Dict[int, Player] = {}
+        self.players_cache = Cache({})
 
         # asyncio.create_task(room_cleaner(self))
 
     async def add_player(self, player: Player):
         async with self.lock:
-            self.connections[player.user.id] = player
+            self.players_cache[player.user.id] = player
+
+            if player.user.id not in self.connections:
+                self.connections[player.user.id] = player
 
     async def pop(self, user_id: int):
         async with self.lock:
+            if user_id in self.players_cache:
+                self.players_cache.pop(user_id)
             if user_id in self.connections:
                 self.connections.pop(user_id)
 
@@ -81,6 +88,6 @@ class RoomManager:
                 rooms["chats"][query.chat_instance] = Room(query.chat_instance)
 
         room: Room = rooms["chats"][query.chat_instance]
-        await room.add_player(Player(query.from_user))
+        await room.add_player(Player(query.from_user, playing=False))
 
         return room

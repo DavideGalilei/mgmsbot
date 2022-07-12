@@ -41,7 +41,7 @@ async def setup_database(app: FastAPI, settings: Settings):
     except DBConnectionError:
         await Tortoise.init(config=config, _create_db=True)
 
-    # await Tortoise.generate_schemas()
+    await Tortoise.generate_schemas()
 
     register_tortoise(
         app,

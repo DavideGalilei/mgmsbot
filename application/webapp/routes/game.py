@@ -5,9 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from application.config.available_games import AVAILABLE_GAMES
-from application.config.config import shared
 from application.utils.check_game_data import check_game_data
-
 
 static = (Path(__file__).parent.parent / "static").resolve(strict=True)
 

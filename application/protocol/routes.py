@@ -6,6 +6,7 @@ from application.config.config import shared
 from application.protocol.protocol import Action, Payload
 from application.protocol.rooms import Room, Player
 from application.utils.check_game_data import check_game_data
+from application.utils.get_pic import get_pic
 
 ws_router = APIRouter(
     prefix="/ws",
@@ -28,19 +29,59 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
 
     room: Room = shared.manager.rooms[game_name]["chats"][decrypted["c"]]
 
-    if decrypted["i"] not in room.connections:
-        return await websocket.close()
+    user_id = decrypted["i"]
 
-    player: Player = room.connections[decrypted["i"]]
+    if user_id in room.connections and room.connections[user_id].is_playing:
+        return await websocket.close()
+    elif user_id not in room.connections:
+        # reconnecting
+        if user_id in room.players_cache:
+            # could find a cached player
+            await room.add_player(room.players_cache[user_id])
+        else:
+            return await websocket.close()
+
+    player: Player = room.connections[user_id]
+    player.is_playing = True
 
     await websocket.accept()
     player.set_conn(websocket)
 
     await room.add_player(player)
 
-    # await shared.bot.send_message(decrypted["i"], "Opened websocket")
+    # await shared.bot.send_message(user_id, "Opened websocket")
 
     try:
+        await player.send_payload(
+            Payload(
+                kind=Action.INFO_LIST,
+                data={
+                    "count": len(room.connections),
+                    "users": [
+                        {
+                            "id": p.user.id,
+                            "name": p.user.first_name,
+                            "photo": await get_pic(p),
+                        }
+                        for p in room.connections.values()
+                    ],
+                },
+            )
+        )
+
+        for p in room.connections.values():
+            if p.user.id != player.user.id:
+                await p.send_payload(
+                    Payload(
+                        kind=Action.JOINED,
+                        data={
+                            "id": player.user.id,
+                            "name": player.user.first_name,
+                            "photo": await get_pic(player),
+                        },
+                    )
+                )
+
         while True:
             data = await player.recv_payload()
 
@@ -69,3 +110,13 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
         logger.info("Client disconnected.")
     finally:
         await room.kick(player)
+        for p in room.connections.values():
+            await p.send_payload(
+                Payload(
+                    kind=Action.LEFT,
+                    data={
+                        "id": player.user.id,
+                        "name": player.user.first_name,
+                    },
+                )
+            )

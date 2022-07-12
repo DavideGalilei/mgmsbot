@@ -23,15 +23,18 @@
         return result;
     }
 
-    const Action = Object.freeze({
+    const Action = window.Action = Object.freeze({
         NO_OP: 1,
         RECEIVE: 2,
         SEND_USER: 3,
         BROADCAST: 4,
         KICK: 5,
+        INFO_LIST: 6,
+        JOINED: 7,
+        LEFT: 8,
     });
 
-    const actionValueMap = Object.assign({}, ...Object.entries(Action).map(([a, b]) => ({[b]: a})));
+    const actionValueMap = window.ActionString = Object.assign({}, ...Object.entries(Action).map(([a, b]) => ({[b]: a})));
 
     function makePayload(payload) {
         const action = makeUint16(payload.action);
@@ -47,8 +50,8 @@
     }
 
     function decodePayload(payload) {
-        console.log(payload, typeof payload);
-        const action = actionValueMap[getUint16(strToBuf(payload.slice(0, 2)))];
+        console.log("received:", payload);
+        const action = getUint16(strToBuf(payload.slice(0, 2)));
         const length = getUint32(strToBuf(payload.slice(2, 6)));
         const data = JSON.parse(payload.slice(6, 6 + length));
 
@@ -73,7 +76,7 @@
         })),
         broadcast: (msg) => connection.send(makePayload({
             action: Action.BROADCAST,
-            data: {"d": msg},
+            data: msg,
         })),
         listenCallback: null,
     };

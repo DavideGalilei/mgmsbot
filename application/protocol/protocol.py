@@ -13,6 +13,9 @@ class Action(Enum):
     SEND_USER = auto()
     BROADCAST = auto()
     KICK = auto()
+    INFO_LIST = auto()
+    JOINED = auto()
+    LEFT = auto()
 
 
 class Payload:
@@ -32,7 +35,7 @@ class Payload:
         stream = BytesIO(data)
         kind = Action(int.from_bytes(stream.read(2), "little", signed=False))
         length = int.from_bytes(stream.read(4), "little", signed=False)
-        decoded = stream.read(length).decode()
+        decoded = "".join(map(chr, stream.read(length)))
         jsoned = json.loads(decoded)
         return Payload(kind=kind, data=jsoned)
 
