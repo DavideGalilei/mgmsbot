@@ -1,4 +1,5 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from loguru import logger
 
 from application.config.available_games import AVAILABLE_GAMES
 from application.config.config import shared
@@ -13,7 +14,7 @@ ws_router = APIRouter(
 )
 
 
-@ws_router.websocket("/{game_name}")
+@ws_router.websocket("/game/{game_name}")
 async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
     if game_name not in AVAILABLE_GAMES:
         return await websocket.close()
@@ -37,7 +38,7 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
 
     await room.add_player(player)
 
-    await shared.bot.send_message(decrypted["i"], "Opened websocket")
+    # await shared.bot.send_message(decrypted["i"], "Opened websocket")
 
     try:
         while True:
@@ -46,14 +47,25 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
             if data.kind == Action.BROADCAST:
                 for uid, p in room.connections.items():
                     if uid != player.user.id:
-                        await p.send_payload(data)
+                        await p.send_payload(
+                            Payload(
+                                kind=data.kind,
+                                data={"u": player.user.id, "data": data.data},
+                            )
+                        )
             elif data.kind == Action.SEND_USER:
                 if data.data["i"] in room.connections:
-                    await room.connections[data.data["i"]].send_payload(data)
+                    await room.connections[data.data["i"]].send_payload(
+                        Payload(
+                            kind=data.kind,
+                            data={"u": player.user.id, "data": data.data},
+                        )
+                    )
             else:
+                logger.critical("Kicking...")
                 await player.send_payload(Payload(Action.KICK))
                 await room.kick(player)
-    except WebSocketDisconnect:
-        print("kicked")
+    except (WebSocketDisconnect, RuntimeError):
+        logger.info("Client disconnected.")
     finally:
         await room.kick(player)

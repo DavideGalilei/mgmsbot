@@ -8,17 +8,11 @@ class InvalidPacket(Exception):
 
 
 class Action(Enum):
-    _value2member_map_: dict
-
-    NO_OP = auto()
+    NO_OP = 1
     RECEIVE = auto()
     SEND_USER = auto()
     BROADCAST = auto()
     KICK = auto()
-
-    @classmethod
-    def from_value(cls, value: int):
-        return cls._value2member_map_.get(value, cls.NO_OP)
 
 
 class Payload:
@@ -28,7 +22,7 @@ class Payload:
 
     def serialize(self):
         b = self.kind.value.to_bytes(2, "little", signed=False)
-        jsoned = json.dumps(self.data, separators=(',', ':')).encode()
+        jsoned = json.dumps(self.data, separators=(",", ":")).encode()
         b += len(jsoned).to_bytes(4, "little", signed=False)
         b += jsoned
         return b
@@ -36,7 +30,11 @@ class Payload:
     @staticmethod
     def deserialize(data: bytes) -> "Payload":
         stream = BytesIO(data)
-        kind = Action.from_value(int.from_bytes(stream.read(2), "little", signed=False))
+        kind = Action(int.from_bytes(stream.read(2), "little", signed=False))
         length = int.from_bytes(stream.read(4), "little", signed=False)
-        jsoned = json.loads(stream.read(length).decode())
+        decoded = stream.read(length).decode()
+        jsoned = json.loads(decoded)
         return Payload(kind=kind, data=jsoned)
+
+    def __str__(self):
+        return f"Payload(kind={Action(self.kind)}, data={self.data})"

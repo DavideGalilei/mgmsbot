@@ -2,9 +2,11 @@ tortoise-orm[accel]
 uvicorn[standard]
 python-dotenv
 pycryptodome
+starlette
 pyrogram
 tgcrypto
 pydantic
 fastapi
 loguru
 pbkdf2
+jinja2

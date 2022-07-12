@@ -53,7 +53,6 @@ async def answer_game(bot: Client, query: CallbackQuery):
                     {
                         "i": query.from_user.id,
                         "c": room.chat_instance,
-                        "p": len(room.connections),
                     }
                 ),
                 secret=shared.SECRET,

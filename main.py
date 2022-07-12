@@ -10,6 +10,8 @@ from fastapi import FastAPI
 from loguru import logger
 from pyrogram import Client
 from pyrogram.enums import ParseMode
+from starlette.routing import Mount
+from starlette.staticfiles import StaticFiles
 from tortoise import run_async
 
 from application.config.config import shared
@@ -21,13 +23,19 @@ from application.protocol.routes import ws_router
 from application.utils.add_admin import add_admin
 from application.webapp.routes.game import game_router
 
-
 root = Path(__file__).parent.resolve(strict=True)
+static = (root / "application" / "webapp" / "static").resolve(strict=True)
+
 FMT = "[{time}] [<bold>{level: <8}</bold>] - {name}:{function}:{line} - <level>{message}</level>"
 
 
 async def main():
-    app = FastAPI(title="Tortoise ORM FastAPI example")
+    app = FastAPI(
+        title="Multiplayer Inline Games",
+        routes=[
+            Mount("/static", StaticFiles(directory=static), name="static"),
+        ],
+    )
     app.include_router(game_router)
     app.include_router(ws_router)
 

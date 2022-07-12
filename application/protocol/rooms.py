@@ -3,10 +3,10 @@ import threading
 from collections import defaultdict
 from typing import Dict, Optional
 
+from fastapi import WebSocket
 from pyrogram import Client
 from pyrogram.raw.types import User
 from pyrogram.types import CallbackQuery
-from fastapi import WebSocket
 from starlette.websockets import WebSocketState
 
 from application.protocol.protocol import Payload
