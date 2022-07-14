@@ -27,8 +27,8 @@ window.addEventListener("load", async (event) => {
         }
         addClass = addClass || false;
         const p = document.createElement("p");
+
         const user = (payload.data || addClass === "sent") && users[addClass === "sent" ? window.room.data["decrypted"].i : payload.data["u"]];
-        console.log(user);
         if (user && user["photo"] !== null) {
             const i = document.createElement("img");
             i.src = `data:image/png;base64,${user["photo"]}`;
