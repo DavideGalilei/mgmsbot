@@ -116,6 +116,8 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
                 await room.kick(player)
     except (WebSocketDisconnect, ConnectionClosedError, RuntimeError):
         logger.info("Client disconnected.")
+    except ValueError:
+        logger.info("Invalid action received, kicking client.")
     finally:
         await room.kick(player)
         for p in room.connections.values():
