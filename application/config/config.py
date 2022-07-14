@@ -3,7 +3,7 @@ from pyrogram import Client
 from application.protocol.rooms import RoomManager
 
 
-class _Config:
+class Config:
     SALT: bytes
     SECRET: str
 
@@ -11,4 +11,4 @@ class _Config:
     manager: RoomManager
 
 
-shared = _Config()
+shared = Config()

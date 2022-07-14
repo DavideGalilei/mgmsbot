@@ -6,7 +6,6 @@ from application.database.models import User
 from application.plugins.antiflood import FLOODERS
 from application.utils.cache import Cache
 
-
 _db_cache = Cache({}, timeout=60 * 3)
 
 

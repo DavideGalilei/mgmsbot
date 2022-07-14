@@ -21,7 +21,6 @@ from application.database.models.user import User
 from application.protocol.rooms import RoomManager
 from application.protocol.routes import ws_router
 from application.utils.add_admin import add_admin
-from application.utils.cache import Cache
 from application.webapp.routes.game import game_router
 
 root = Path(__file__).parent.resolve(strict=True)

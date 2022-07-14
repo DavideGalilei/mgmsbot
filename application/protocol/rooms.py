@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import threading
 from collections import defaultdict
 from typing import Dict, Optional
@@ -10,7 +11,7 @@ from pyrogram.types import User, CallbackQuery
 from starlette.websockets import WebSocketState
 
 from application.config.available_games import AVAILABLE_GAMES
-from application.protocol.protocol import Payload
+from application.protocol.protocol import Payload, Action
 from application.utils.cache import Cache
 
 
@@ -74,8 +75,11 @@ class Room:
             if user_id in self.connections:
                 self.connections.pop(user_id)
 
-    async def kick(self, player: Player):
+    async def kick(self, player: Player, reason: dict = None):
         async with self.lock:
+            with contextlib.suppress(Exception):
+                await player.send_payload(Payload(Action.KICK, data=reason))
+
             if player.user.id in self.connections:
                 self.connections.pop(player.user.id)
             if (
@@ -110,7 +114,11 @@ class RoomManager:
                     async with cls.rooms[game]["lock"]:
                         for chat in list(cls.rooms[game]["chats"].keys()):
                             if not len(cls.rooms[game]["chats"][chat].connections):
-                                logger.info("Cleaned inactive chat (game={game}, {chat})", chat=chat, game=game)
+                                logger.info(
+                                    "Cleaned inactive chat (game={game}, {chat})",
+                                    chat=chat,
+                                    game=game,
+                                )
                                 cls.rooms[game]["chats"].pop(chat)
 
 

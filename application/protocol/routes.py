@@ -24,13 +24,15 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
         logger.info("Kicked user: game is not valid")
         return await websocket.close()
 
+    game = AVAILABLE_GAMES[game_name]
+
     decrypted = await check_game_data(d)
     if not decrypted:
         logger.info("Invalid decrypted data")
         return await websocket.close()
 
     if decrypted["c"] not in shared.manager.rooms[game_name]["chats"]:
-        logger.info("Decripted chat is not valid")
+        logger.info("Decrypted chat is not valid")
         return await websocket.close()
 
     room: Room = shared.manager.rooms[game_name]["chats"][decrypted["c"]]
@@ -52,6 +54,21 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
 
     player: Player = room.connections[user_id]
     player.is_playing = True
+
+    max_connections_reached = False
+    async with room.lock:
+        if len(room.connections) > game.max_players:
+            max_connections_reached = True
+
+    if max_connections_reached:
+        logger.info("Max connections limit reached in this room, kicking user...")
+        return await room.kick(
+            player,
+            {
+                "reason": "MAX_CONNECTIONS_PER_ROOM",
+                "message": "Too many users are connected",
+            },
+        )
 
     await websocket.accept()
     player.set_conn(websocket)
@@ -114,7 +131,6 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
                     )
             else:
                 logger.critical("Kicking client (unsupported server side action)...")
-                await player.send_payload(Payload(Action.KICK))
                 return await room.kick(player)
     except (WebSocketDisconnect, ConnectionClosedError, RuntimeError):
         logger.info("Client disconnected.")
