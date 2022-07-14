@@ -31,6 +31,9 @@ def _(
 
 def _name(msg: Message) -> str:
     user = msg.from_user or msg.sender_chat
+    if user is None:
+        return "null"
+    return user.first_name or user.title or "null"
 
 
 strings = {
