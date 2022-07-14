@@ -13,12 +13,13 @@
     <script src="{{ url_for('static', path='/multiplayer.js') }}"></script>
 </head>
 <body>
-    <label for="input">Text:</label>
-    <input type="text" id="input" name="text">
-    <button id="send">send</button>
-
-    <div id="messages">
-        <!-- New messages will appear here -->
+    <p id="count">Online users: 1</p>
+    <div id="players">
+        <!-- A list of users is shown here -->
     </div>
+
+
+    <!-- TODO: Use Youtube Player API, and sync current link, timestamp -->
+    <!-- https://developers.google.com/youtube/iframe_api_reference -->
 </body>
 </html>
