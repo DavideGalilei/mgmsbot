@@ -46,6 +46,7 @@
         insertIntoBuffer(buffer, length, 2);
         insertIntoBuffer(buffer, jsoned, 2 + 4);
 
+        console.log("sent:", String.fromCharCode.apply(null, buffer));
         return buffer;
     }
 

@@ -13,9 +13,11 @@
     <script src="{{ url_for('static', path='/multiplayer.js') }}"></script>
 </head>
 <body>
-    <label for="input">Text:</label>
-    <input type="text" id="input" name="text">
-    <button id="send">send</button>
+    <div id="input_div">
+        <label for="input">Text:</label>
+        <input type="text" required pattern=".{1,}" id="input" name="text">
+        <button id="send">send</button>
+    </div>
 
     <div id="messages">
         <!-- New messages will appear here -->

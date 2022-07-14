@@ -2,6 +2,7 @@ tortoise-orm[accel]
 uvicorn[standard]
 python-dotenv
 pycryptodome
+websockets
 starlette
 pyrogram
 tgcrypto

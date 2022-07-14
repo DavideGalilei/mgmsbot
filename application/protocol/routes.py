@@ -2,7 +2,7 @@ from json import JSONDecodeError
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from loguru import logger
-from websockets.exceptions import ConnectionClosedError
+from websockets.exceptions import ConnectionClosed
 
 from application.config.available_games import AVAILABLE_GAMES
 from application.config.config import shared
@@ -114,7 +114,7 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
 
             if data.kind == Action.BROADCAST:
                 for uid, p in room.connections.items():
-                    if uid != player.user.id and player.connection is not None:
+                    if uid != player.user.id and p.connection is not None:
                         await p.send_payload(
                             Payload(
                                 kind=data.kind,
@@ -132,7 +132,7 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
             else:
                 logger.critical("Kicking client (unsupported server side action)...")
                 return await room.kick(player)
-    except (WebSocketDisconnect, ConnectionClosedError, RuntimeError):
+    except (WebSocketDisconnect, ConnectionClosed, RuntimeError):
         logger.info("Client disconnected.")
     except JSONDecodeError:
         logger.info("Received corrupted payload")

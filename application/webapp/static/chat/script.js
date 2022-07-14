@@ -5,28 +5,44 @@ window.addEventListener("load", async (event) => {
     const button = document.getElementById("send");
     const input = document.getElementById("input");
     const messages = document.getElementById("messages");
+    const body = document.querySelector("body");
+
     let users = {};
 
-    function addMessage(payload, sent) {
-        sent = sent || false;
+    input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" && e.target.value.trim()) {
+            button.click();
+        }
+    })
+
+    function addMessage(payload, addClass) {
+        if (!(addClass ? payload : payload.data.data.text)) {
+            return;
+        }
+        addClass = addClass || false;
         const p = document.createElement("p");
-        if (!sent && payload.data["u"] in users && users[payload.data["u"]]["photo"] !== null) {
+        const user = (payload.data || addClass === "sent") && users[addClass === "sent" ? window.room.data["decrypted"].i : payload.data["u"]];
+        console.log(user);
+        if (user && user["photo"] !== null) {
             const i = document.createElement("img");
-            i.src = `data:image/png;base64,${users[payload.data["u"]]["photo"]}`;
+            i.src = `data:image/png;base64,${user["photo"]}`;
             i.style.cssText = "border-radius: 100%; max-width: 50px;";
             p.appendChild(i);
         }
-        const t = document.createTextNode(sent ? payload : payload.data.data.text);
+        const t = document.createTextNode(addClass ? payload : payload.data.data.text);
         p.appendChild(t);
-        if (sent) {
-            p.classList.add("sent");
+        if (!!addClass) {
+            p.classList.add(addClass);
         }
         messages.appendChild(p);
+        body.scrollIntoView({ behavior: "smooth", block: "end" });
     }
 
     button.addEventListener("click", (e) => {
-        window.room.broadcast({"text": input.value});
-        addMessage(input.value, true)
+        if (!(input.value.trim())) return;
+
+        window.room.broadcast({"text": input.value.trim()});
+        addMessage(input.value, "sent")
         input.value = "";
     });
 
@@ -41,9 +57,11 @@ window.addEventListener("load", async (event) => {
             }
             case Action.JOINED: {
                 users[payload.data.id] = payload.data;
+                addMessage(`${users[payload.data.id].name} joined the chat`, "joined");
                 break;
             }
             case Action.LEFT: {
+                addMessage(`${users[payload.data.id].name} left the chat`, "left");
                 delete users[payload.data.id];
                 break;
             }
@@ -52,7 +70,7 @@ window.addEventListener("load", async (event) => {
                 break;
             }
             default: {
-                addMessage(JSON.stringify(payload), true);
+                addMessage(JSON.stringify(payload), "debug");
                 break;
             }
         }

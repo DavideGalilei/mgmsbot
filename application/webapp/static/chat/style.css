@@ -6,6 +6,53 @@ p {
     padding: 5px;
 }
 
+.debug {
+    border: solid purple;
+}
+
+.joined {
+    border: solid blue;
+}
+
+.left {
+    border: solid red;
+}
+
 .sent {
     border: solid green;
+}
+/* https://codepen.io/bramus/pen/rNWByYz */
+.sent  {
+	--angle: 0deg;
+	border: solid;
+	border-image: conic-gradient(from var(--angle), red, yellow, lime, aqua, blue, magenta, red) 1;
+	animation: 3s rotate linear infinite;
+}
+
+@keyframes rotate {
+	to {
+		--angle: 360deg;
+	}
+}
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+#input_div {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 999;
+    width: 100%;
+    height: auto;
+    padding: .5rem;
+    background: white;
+    border-top: solid grey;
+}
+
+#messages {
+    padding-bottom: 2rem;
 }
