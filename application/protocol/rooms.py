@@ -41,6 +41,13 @@ class Player:
         await self.connection.send_bytes(p.serialize())
 
     async def recv_payload(self) -> Payload:
+        # Max size is 1MB btw
+        # The max_size parameter enforces the maximum size for incoming messages in bytes.
+        # The default value is 1MB. None disables the limit.
+        # If a message larger than the maximum size is received,
+        # recv() will return None and the connection will be closed with status code 1009.
+        # https://websockets.readthedocs.io/en/2.2/
+
         return Payload.deserialize(await self.connection.receive_bytes())
 
 

@@ -1,10 +1,12 @@
+from json import JSONDecodeError
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from loguru import logger
 from websockets.exceptions import ConnectionClosedError
 
 from application.config.available_games import AVAILABLE_GAMES
 from application.config.config import shared
-from application.protocol.protocol import Action, Payload
+from application.protocol.protocol import Action, Payload, PayloadTooBig
 from application.protocol.rooms import Room, Player
 from application.utils.check_game_data import check_game_data
 from application.utils.get_pic import get_pic
@@ -111,13 +113,17 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
                         )
                     )
             else:
-                logger.critical("Kicking client...")
+                logger.critical("Kicking client (unsupported server side action)...")
                 await player.send_payload(Payload(Action.KICK))
-                await room.kick(player)
+                return await room.kick(player)
     except (WebSocketDisconnect, ConnectionClosedError, RuntimeError):
         logger.info("Client disconnected.")
+    except JSONDecodeError:
+        logger.info("Received corrupted payload")
     except ValueError:
         logger.info("Invalid action received, kicking client.")
+    except PayloadTooBig:
+        logger.info("The payload size is too big")
     finally:
         await room.kick(player)
         for p in room.connections.values():

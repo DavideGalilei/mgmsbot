@@ -7,6 +7,14 @@ class InvalidPacket(Exception):
     pass
 
 
+class PayloadTooBig(InvalidPacket):
+    def __init__(self, size: int):
+        self.size = size
+
+    def __str__(self):
+        return f"The Payload size is too big (length={self.size})"
+
+
 class Action(Enum):
     NO_OP = 1
     RECEIVE = auto()
@@ -34,7 +42,11 @@ class Payload:
     def deserialize(data: bytes) -> "Payload":
         stream = BytesIO(data)
         kind = Action(int.from_bytes(stream.read(2), "little", signed=False))
+
         length = int.from_bytes(stream.read(4), "little", signed=False)
+        if length > 0x00FFFFFF:
+            raise PayloadTooBig(size=length)
+
         decoded = "".join(map(chr, stream.read(length)))
         jsoned = json.loads(decoded)
         return Payload(kind=kind, data=jsoned)
