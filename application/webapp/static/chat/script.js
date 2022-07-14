@@ -5,8 +5,10 @@ window.addEventListener("load", async (event) => {
     const button = document.getElementById("send");
     const input = document.getElementById("input");
     const messages = document.getElementById("messages");
+    const online = document.getElementById("online");
     const body = document.querySelector("body");
 
+    input.focus();
     let users = {};
 
     input.addEventListener("keypress", (e) => {
@@ -14,6 +16,10 @@ window.addEventListener("load", async (event) => {
             button.click();
         }
     })
+
+    function updateOnline() {
+        online.innerText = `Online users: ${Object.values(users).map((x) => x.name).join(", ")}`;
+    }
 
     function addMessage(payload, addClass) {
         if (!(addClass ? payload : payload.data.data.text)) {
@@ -53,16 +59,19 @@ window.addEventListener("load", async (event) => {
                     obj[x.id] = x;
                     return obj;
                 }, {});
+                updateOnline();
                 break;
             }
             case Action.JOINED: {
                 users[payload.data.id] = payload.data;
                 addMessage(`${users[payload.data.id].name} joined the chat`, "joined");
+                updateOnline();
                 break;
             }
             case Action.LEFT: {
                 addMessage(`${users[payload.data.id].name} left the chat`, "left");
                 delete users[payload.data.id];
+                updateOnline();
                 break;
             }
             case Action.BROADCAST: {

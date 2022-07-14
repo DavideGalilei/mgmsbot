@@ -51,8 +51,17 @@ p {
     padding: .5rem;
     background: white;
     border-top: solid grey;
+	box-sizing: border-box;
+}
+
+#input_div > p {
+	overflow-x: scroll;
+	width: 100%;
+	white-space: nowrap;
+	border: solid black;
+	box-sizing: border-box;
 }
 
 #messages {
-    padding-bottom: 2rem;
+    padding-bottom: 7rem;
 }
