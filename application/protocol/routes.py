@@ -1,5 +1,6 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from loguru import logger
+from websockets.exceptions import ConnectionClosedError
 
 from application.config.available_games import AVAILABLE_GAMES
 from application.config.config import shared
@@ -18,13 +19,16 @@ ws_router = APIRouter(
 @ws_router.websocket("/game/{game_name}")
 async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
     if game_name not in AVAILABLE_GAMES:
+        logger.info("Kicked user: game is not valid")
         return await websocket.close()
 
     decrypted = await check_game_data(d)
     if not decrypted:
+        logger.info("Invalid decrypted data")
         return await websocket.close()
 
     if decrypted["c"] not in shared.manager.rooms[game_name]["chats"]:
+        logger.info("Decripted chat is not valid")
         return await websocket.close()
 
     room: Room = shared.manager.rooms[game_name]["chats"][decrypted["c"]]
@@ -32,13 +36,16 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
     user_id = decrypted["i"]
 
     if user_id in room.connections and room.connections[user_id].is_playing:
+        logger.info("Closed connection: player is already playing")
         return await websocket.close()
     elif user_id not in room.connections:
         # reconnecting
         if user_id in room.players_cache:
             # could find a cached player
+            logger.success("Client reconnected")
             await room.add_player(room.players_cache[user_id])
         else:
+            logger.info("Client couldn't reconnect (no cache found)")
             return await websocket.close()
 
     player: Player = room.connections[user_id]
@@ -64,13 +71,14 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
                             "photo": await get_pic(p),
                         }
                         for p in room.connections.values()
+                        if p.is_playing
                     ],
                 },
             )
         )
 
         for p in room.connections.values():
-            if p.user.id != player.user.id:
+            if p.user.id != player.user.id and p.connection is not None:
                 await p.send_payload(
                     Payload(
                         kind=Action.JOINED,
@@ -87,7 +95,7 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
 
             if data.kind == Action.BROADCAST:
                 for uid, p in room.connections.items():
-                    if uid != player.user.id:
+                    if uid != player.user.id and player.connection is not None:
                         await p.send_payload(
                             Payload(
                                 kind=data.kind,
@@ -103,20 +111,21 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
                         )
                     )
             else:
-                logger.critical("Kicking...")
+                logger.critical("Kicking client...")
                 await player.send_payload(Payload(Action.KICK))
                 await room.kick(player)
-    except (WebSocketDisconnect, RuntimeError):
+    except (WebSocketDisconnect, ConnectionClosedError, RuntimeError):
         logger.info("Client disconnected.")
     finally:
         await room.kick(player)
         for p in room.connections.values():
-            await p.send_payload(
-                Payload(
-                    kind=Action.LEFT,
-                    data={
-                        "id": player.user.id,
-                        "name": player.user.first_name,
-                    },
+            if p.connection is not None:
+                await p.send_payload(
+                    Payload(
+                        kind=Action.LEFT,
+                        data={
+                            "id": player.user.id,
+                            "name": player.user.first_name,
+                        },
+                    )
                 )
-            )

@@ -20,12 +20,12 @@ class SuperLock:
         self.async_lock = asyncio.Lock()
 
     async def __aenter__(self):
-        self.lock.acquire()
         await self.async_lock.acquire()
+        # self.lock.acquire()
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         self.async_lock.release()
-        self.lock.release()
+        # self.lock.release()
 
 
 class Player:

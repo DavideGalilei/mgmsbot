@@ -13,6 +13,7 @@ async def get_pic(player: Player) -> Optional[str]:
         return _profile_pictures[player.user.id]
 
     if await shared.bot.get_chat_photos_count(player.user.id) < 1:
+        _profile_pictures[player.user.id] = None
         return None
 
     async for photo in shared.bot.get_chat_photos(player.user.id, limit=1):

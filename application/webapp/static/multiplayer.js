@@ -72,7 +72,7 @@
         decodePayload,
         sendUser: (uid, msg) => connection.send(makePayload({
             action: Action.SEND_USER,
-            data: {i: uid},
+            data: {i: uid, msg: msg},
         })),
         broadcast: (msg) => connection.send(makePayload({
             action: Action.BROADCAST,
