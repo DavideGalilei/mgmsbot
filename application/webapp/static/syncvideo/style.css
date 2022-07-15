@@ -1,7 +1,30 @@
-p {
-    border: solid darkorange;
-    display: flex;
-    align-items: center;
-    column-gap: 10px;
-    padding: 5px;
+#pro_player_de_fifa {
+    width: 100%;
+    height: calc(100% - 2px);
+    padding: 0px;
+    margin: 0px;
+}
+@media (max-width: 768px) {
+    #main1 {
+        width: 100% !important;
+        height: auto !important;
+        background: 0 !important;
+        border-radius: 0px !important;
+    }
+    #main2 {
+        display: block !important;
+    }
+    #online {
+        width: 100% !important;
+        overflow: visible !important;
+    }
+    #playwrapper {
+        width: 100% !important;
+        height: 100% !important;
+        background: 0 !important;
+        border-radius: 0px !important;
+    }
+}
+.flex {
+    display: flex !important;
 }

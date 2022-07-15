@@ -79,7 +79,7 @@
             action: Action.BROADCAST,
             data: msg,
         })),
-        listenCallback: null,
+        listenCallback: window._roomcallback??null
     };
 
     fetch(`${l.href}`, {
