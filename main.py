@@ -11,7 +11,6 @@ from loguru import logger
 from pyrogram import Client
 from pyrogram.enums import ParseMode
 from starlette.routing import Mount
-from starlette.staticfiles import StaticFiles
 from tortoise import run_async
 
 from application.config.config import shared
@@ -20,6 +19,7 @@ from application.database import setup_database
 from application.database.models.user import User
 from application.protocol.rooms import RoomManager
 from application.protocol.routes import ws_router
+from application.utils import SafeStaticFiles
 from application.utils.add_admin import add_admin
 from application.webapp.routes.game import game_router
 
@@ -33,7 +33,7 @@ async def main():
     app = FastAPI(
         title="Multiplayer Inline Games",
         routes=[
-            Mount("/static", StaticFiles(directory=static), name="static"),
+            Mount("/static", SafeStaticFiles(directory=static), name="static"),
         ],
     )
     app.include_router(game_router)
