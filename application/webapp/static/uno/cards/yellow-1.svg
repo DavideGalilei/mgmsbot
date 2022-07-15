@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="-1299.32 -958.077 240 360" width="240" height="360" xmlns="http://www.w3.org/2000/svg">
+  <g transform="matrix(4, 0, 0, 4, -1539.320038, -2287.526123)" id="g6563-5">
+    <rect width="60" height="90" rx="10" ry="10" x="60" y="332.36218" id="rect2987-3" style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd"/>
+    <rect width="50" height="80" rx="5" ry="5" x="65" y="337.36218" id="rect3757-51" style="fill:#ffaa00;fill-opacity:1;fill-rule:evenodd;stroke:none"/>
+    <path d="m 105,352.36217 c -22.09139,0 -40,17.90861 -40,40 0,5.52285 4.47715,10 10,10 22.09139,0 40,-17.90861 40,-40 0,-5.52285 -4.47715,-10 -10,-10 z" id="path3773-0-4-8-4-22" style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none"/>
+    <path d="m 88,362.36217 -5,5 0,6 5,-5 0,24 5,0 0,-30 z" id="rect3921-2" style="fill:#ffaa00;fill-opacity:1;fill-rule:evenodd;stroke:none"/>
+    <path d="m 70,339.86217 -2.5,2.5 0,3 2.5,-2.5 0,12 2.5,0 0,-15 z" id="rect3921-5-6" style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none"/>
+    <path d="m 110,414.86217 2.5,-2.5 0,-3 -2.5,2.5 0,-12 -2.5,0 0,15 z" id="rect3921-5-5-4" style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none"/>
+  </g>
+</svg>

@@ -1,0 +1,80 @@
+body {
+    background: #DCDCDC;
+}
+
+#game {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    gap: 40px 0;
+    flex-wrap: wrap;
+}
+
+#my-deck {
+    margin-top: 0;
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+}
+
+#players {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-evenly;
+    width: 100%;
+}
+
+.player-photo {
+    width: 2.6vw;
+    height: 2.6vw;
+    border-radius: 50%;
+    background: #000;
+}
+
+.player {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px 0;
+}
+
+.player-deck {
+    margin-right: 2.8vw;
+}
+
+.player-deck > .card {
+    width: 3vw;
+    margin-right: -2.8vw;
+}
+
+#main-deck > .card {
+    width: 9vw;
+}
+
+.card {
+    width: 7vw;
+    object-fit: contain;
+    background-size: cover;
+}
+
+.my {
+    margin-right: -25px;
+    transition: all 0.4s;
+    box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px;
+}
+
+.my:hover {
+    transform: scale(1.08, 1.08);
+}
+
+* {
+    border: none;
+}

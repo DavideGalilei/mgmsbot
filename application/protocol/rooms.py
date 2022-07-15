@@ -122,4 +122,4 @@ class RoomManager:
                                 cls.rooms[game]["chats"].pop(chat)
 
 
-asyncio.get_event_loop().create_task(RoomManager.inactive_cleaner(every_seconds=2 * 60))
+asyncio.get_event_loop().create_task(RoomManager.inactive_cleaner(every_seconds=60))
