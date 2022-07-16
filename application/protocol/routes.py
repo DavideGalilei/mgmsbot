@@ -1,3 +1,4 @@
+from contextlib import suppress
 from json import JSONDecodeError
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -19,6 +20,7 @@ ws_router = APIRouter(
 
 
 @ws_router.websocket("/game/{game_name}")
+@logger.catch(reraise=True)
 async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
     if game_name not in AVAILABLE_GAMES:
         logger.info("Kicked user: game is not valid")
@@ -82,7 +84,7 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
             Payload(
                 kind=Action.INFO_LIST,
                 data={
-                    "count": len(room.connections),
+                    "count": len([p for p in room.connections.values() if p.is_playing]),
                     "users": [
                         {
                             "id": p.user.id,
@@ -144,12 +146,13 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
         await room.kick(player)
         for p in room.connections.values():
             if p.connection is not None:
-                await p.send_payload(
-                    Payload(
-                        kind=Action.LEFT,
-                        data={
-                            "id": player.user.id,
-                            "name": player.user.first_name,
-                        },
+                with suppress(RuntimeError):
+                    await p.send_payload(
+                        Payload(
+                            kind=Action.LEFT,
+                            data={
+                                "id": player.user.id,
+                                "name": player.user.first_name,
+                            },
+                        )
                     )
-                )

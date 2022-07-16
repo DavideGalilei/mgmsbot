@@ -16,11 +16,48 @@ body {
     flex-wrap: wrap;
 }
 
+#color-bar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    gap: 0 3vw;
+}
+
+.color {
+    width: 5vw;
+    height: 3vw;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.color:hover {
+    transform: scale(1.05);
+}
+
+#blue {
+    background: #5555ff;
+}
+
+#red {
+    background: #ff5555;
+}
+
+#yellow {
+    background: #ffaa00;
+}
+
+#green {
+    background: #55aa55;
+}
+
 #my-deck {
     margin-top: 0;
     display: flex;
     justify-content: center;
     flex-direction: row;
+    margin-right: 3vw;
 }
 
 #players {
@@ -36,6 +73,32 @@ body {
     height: 2.6vw;
     border-radius: 50%;
     background: #000;
+    outline: solid black .3vw;
+}
+
+#game-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: row;
+    gap: 0 3vw;
+}
+
+.game-button {
+    width: 8vw;
+    height: 3vw;
+    background: #8FBC8F;
+    transition: box-shadow 0.3s;
+    border-radius: 12px;
+    cursor: pointer;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    font-size: 1vw;
+}
+
+.game-button:hover {
+    box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px;
 }
 
 .player {
@@ -57,24 +120,45 @@ body {
 
 #main-deck > .card {
     width: 9vw;
+    border: solid 1vw transparent;
+    border-radius: 2.5vw;
 }
 
 .card {
     width: 7vw;
     object-fit: contain;
     background-size: cover;
+    background-clip: padding-box;
 }
 
 .my {
-    margin-right: -25px;
-    transition: all 0.4s;
-    box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px;
+    margin-right: -3vw;
+    /* box-shadow: rgba(17, 12, 46, 0.15) 0px 48px 100px 0px; */
+    -webkit-filter: drop-shadow(0px 48px 100px rgba(17, 12, 46, 0.15));
+    filter: drop-shadow(0px 48px 100px rgba(17, 12, 46, 0.15));
 }
 
-.my:hover {
-    transform: scale(1.08, 1.08);
+.trans {
+    transition: transform ease-out 0.2s;
+}
+
+.trans.my:hover {
+    transform: translateY(-3vw);
+    /* z-index: 1; */
+}
+
+canvas {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 * {
     border: none;
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+    user-select: none;
 }

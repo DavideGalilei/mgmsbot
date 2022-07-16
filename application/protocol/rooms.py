@@ -61,8 +61,17 @@ class Room:
 
         # asyncio.create_task(room_cleaner(self))
 
+    async def clean_inactive(self, player: Player):
+        await asyncio.sleep(20)
+        if player.user.id in self.connections and not self.connections[player.user.id].is_playing:
+            logger.info("Kicked inactive player (is_playing=False)")
+            await self.pop(player.user.id)
+
     async def add_player(self, player: Player):
         async with self.lock:
+            if not player.is_playing:
+                asyncio.create_task(self.clean_inactive(player))
+
             self.players_cache[player.user.id] = player
 
             if player.user.id not in self.connections:
@@ -86,7 +95,8 @@ class Room:
                 player.connection.application_state == WebSocketState.CONNECTED
                 and player.connection.client_state == WebSocketState.CONNECTED
             ):
-                await player.connection.close()
+                with contextlib.suppress(TypeError):
+                    await player.connection.close()
 
 
 class RoomManager:

@@ -10,29 +10,26 @@
     <link href="{{ url_for('static', path=css_path) }}" rel="stylesheet">
     <script src="{{ url_for('static', path=js_path) }}"></script>
 
-    <script src="{{ url_for('static', path='/multiplayer.js') }}"></script>
+    <!-- <script src="{{ url_for('static', path='/multiplayer.js') }}"></script> -->
 </head>
 <body>
     <div id="game">
         <div id="players">
-            <div class="player">
-                <div class="player-photo">
-
-                </div>
-                <div class="player-deck">
-                    <img class="card" src="/static/uno/cards/stroke-red-0.svg" alt="card" />
-                    <img class="card" src="/static/uno/cards/stroke-red-0.svg" alt="card" />
-                    <img class="card" src="/static/uno/cards/stroke-red-0.svg" alt="card" />
-                </div>
-            </div>
         </div>
         <div id="main-deck">
-            <img class="main card" src="/static/uno/cards/stroke-red-0.svg"  alt="card"/>
+        </div>
+        <div id="color-bar" style="display:none;">
+            <div id="red" class="color"></div>
+            <div id="blue" class="color"></div>
+            <div id="yellow" class="color"></div>
+            <div id="green" class="color"></div>
         </div>
         <div id="my-deck">
-            <img class="my card" src="/static/uno/cards/stroke-red-0.svg" alt="card" />
-            <img class="my card" src="/static/uno/cards/stroke-red-0.svg" alt="card" />
-            <img class="my card" src="/static/uno/cards/stroke-red-0.svg" alt="card" />
+        </div>
+        <div id="game-buttons">
+            <div id="take-card" class="game-button"><span>take a card</span></div>
+            <div id="skip-turn" class="game-button"><span>skip the turn</span></div>
+            <div id="say-uno" class="game-button"><span>say UNO</span></div>
         </div>
     </div>
 </body>

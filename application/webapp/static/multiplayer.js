@@ -82,13 +82,13 @@
         listenCallback: window._roomcallback??null
     };
 
-    fetch(`${l.href}`, {
+    let data = await (await fetch(`${l.href}`, {
         credentials: "include",
         method: "POST",
-    }).then(response => response.json()).then(data => {
-        console.log(data);
-        window.room.data = data;
-    }).catch(err => console.log(err));
+    })).json();
+
+    console.log(data);
+    window.room.data = data;
 
     connection.addEventListener("message", async (event) => {
         if (window.room.listenCallback !== null) {
