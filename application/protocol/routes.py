@@ -144,6 +144,10 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
         logger.info("The payload size is too big")
     finally:
         await room.kick(player)
+
+        if not len(room.connections):
+            await shared.manager.clean(room)
+
         for p in room.connections.values():
             if p.connection is not None:
                 with suppress(RuntimeError):

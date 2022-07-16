@@ -53,8 +53,9 @@ class Player:
 
 
 class Room:
-    def __init__(self, chat_instance: str):
+    def __init__(self, chat_instance: str, game_name: str):
         self.chat_instance = chat_instance
+        self.game_name = game_name
         self.lock = SuperLock()
         self.connections: Dict[int, Player] = {}
         self.players_cache = Cache({})
@@ -63,7 +64,10 @@ class Room:
 
     async def clean_inactive(self, player: Player):
         await asyncio.sleep(20)
-        if player.user.id in self.connections and not self.connections[player.user.id].is_playing:
+        if (
+            player.user.id in self.connections
+            and not self.connections[player.user.id].is_playing
+        ):
             logger.info("Kicked inactive player (is_playing=False)")
             await self.pop(player.user.id)
 
@@ -109,12 +113,22 @@ class RoomManager:
         rooms = self.rooms[query.game_short_name]
         async with rooms["lock"]:
             if query.chat_instance not in rooms["chats"]:
-                rooms["chats"][query.chat_instance] = Room(query.chat_instance)
+                rooms["chats"][query.chat_instance] = Room(query.chat_instance, query.game_short_name)
 
         room: Room = rooms["chats"][query.chat_instance]
         await room.add_player(Player(query.from_user, playing=False))
-
         return room
+
+    async def clean_soon_if_empty(self, room: Room, seconds: int = 20):
+        await asyncio.sleep(seconds)
+        if not room.connections:
+            logger.info(
+                "Cleaning inactive empty room after {seconds} seconds (game={game_name}, {chat_instance})",
+                seconds=seconds,
+                game_name=room.game_name,
+                chat_instance=room.chat_instance,
+            )
+            self.rooms[room.game_name]["chats"].pop(room.chat_instance)
 
     @classmethod
     async def inactive_cleaner(cls, every_seconds: int):
