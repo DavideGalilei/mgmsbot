@@ -119,9 +119,10 @@ class RoomManager:
         await room.add_player(Player(query.from_user, playing=False))
         return room
 
+    """
     async def clean_soon_if_empty(self, room: Room, seconds: int = 20):
         await asyncio.sleep(seconds)
-        if not room.connections:
+        if not room.connections and room.chat_instance in self.rooms[room.game_name]["chats"]:
             logger.info(
                 "Cleaning inactive empty room after {seconds} seconds (game={game_name}, {chat_instance})",
                 seconds=seconds,
@@ -129,6 +130,7 @@ class RoomManager:
                 chat_instance=room.chat_instance,
             )
             self.rooms[room.game_name]["chats"].pop(room.chat_instance)
+    """
 
     @classmethod
     async def inactive_cleaner(cls, every_seconds: int):

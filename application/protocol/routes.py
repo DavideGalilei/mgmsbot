@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import suppress
 from json import JSONDecodeError
 
@@ -145,12 +146,12 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
     finally:
         await room.kick(player)
 
-        if not len(room.connections):
-            await shared.manager.clean(room)
+        # if not len(room.connections):
+        #     asyncio.create_task(shared.manager.clean_soon_if_empty(room))
 
         for p in room.connections.values():
             if p.connection is not None:
-                with suppress(RuntimeError):
+                with suppress(RuntimeError, ConnectionClosed, WebSocketDisconnect):
                     await p.send_payload(
                         Payload(
                             kind=Action.LEFT,
