@@ -622,5 +622,5 @@ window.addEventListener("load", async (event) => {
         console.log(users);
     };
 
-    loadScript("/static/multiplayer.js");
+    loadScript(window._lib_url);
 });
