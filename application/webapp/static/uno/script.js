@@ -130,10 +130,12 @@ function getMainCard() {
 
 function setMainCard(card) {
     if (mainDeck.children.length > 0) {
-        mainDeck.removeChild(mainDeck.children[0]);
+        mainDeck.replaceChild(getCard(card, ["main"]), mainDeck.children[0]);
+    }
+    else {
+        addCard(mainDeck, card, ["main"]);
     }
     mainCard = card;
-    addCard(mainDeck, card, ["main"]);
 }
 
 const Colors = Object.freeze({
@@ -150,6 +152,10 @@ function setMainColor(color) {
 }
 
 function addCard(container, type, classes = []) {
+    container.appendChild(getCard(type, classes));
+}
+
+function getCard(type, classes = []) {
     let typeChunks = type.split("-");
     type = `${typeChunks[typeChunks.length - 2]}-${typeChunks[typeChunks.length - 1]}`;
     let card = document.createElement("img");
@@ -160,7 +166,6 @@ function addCard(container, type, classes = []) {
     classes.forEach((className) => {
         card.classList.add(className);
     });
-    container.appendChild(card);
 
     card.setAttribute("draggable", "false");
 
