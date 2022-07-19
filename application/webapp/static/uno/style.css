@@ -139,7 +139,7 @@ body {
 }
 
 .trans {
-    transition: transform ease-out 0.2s;
+    transition: transform ease-out 0.4s;
 }
 
 :not(.no-hover).trans.my:hover {
