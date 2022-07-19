@@ -6,6 +6,8 @@ function loadScript(src) {
 }
 
 const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+const lerp = (start, end, amt) => (1-amt) * start + amt * end;
+
 
 // https://stackoverflow.com/a/69419420
 function timeout(time_ms) {
@@ -64,6 +66,35 @@ function randomPic(id) {
     ctx.putImageData(imgData, 0, 0);
     return canvas;
 }
+
+const sign = (n) => (!!n) * 2 - 1;
+
+
+// Get mouse pos
+// https://stackoverflow.com/a/22986867
+let
+    mouseX = 0,
+    mouseY = 0;
+
+function onMouseUpdate(e) {
+  mouseX = e.pageX;
+  mouseY = e.pageY;
+}
+
+function onTouchMove(e) {
+    // https://stackoverflow.com/a/61732450
+    let evt = (typeof e.originalEvent === 'undefined') ? e : e.originalEvent;
+    let touch = evt.touches[0] || evt.changedTouches[0];
+    mouseX = touch.pageX;
+    mouseY = touch.pageY;
+}
+
+document.addEventListener("mousemove", onMouseUpdate, false);
+document.addEventListener("mouseenter", onMouseUpdate, false);
+
+document.addEventListener("touchstart", onTouchMove, false);
+document.addEventListener("touchmove", onTouchMove, false);
+document.addEventListener("touchcancel", onTouchMove, false);
 
 
 const PacketType = Object.freeze({
@@ -134,42 +165,39 @@ function addCard(container, type, classes = []) {
     card.setAttribute("draggable", "false");
 
     if (classes.includes("my")) {
-        card.addEventListener("mousedown", e => {
+        function hold(e) {
             // console.log("Drag start");
             e.preventDefault();
+            document.querySelectorAll(".my.card").forEach(card => card.classList.add("no-hover"));
 
             card.classList.remove("trans");
             card.style.zIndex = "2";
 
-            const Margin = remToPixels(3), Speed = 0.001;
+            const Margin = remToPixels(3);
+
+            let
+                interval = null,
+                sx = 0, sy = 0,
+                dx = 0, dy = 0,
+                rx = 0, ry = 0;
 
             let b = card.getBoundingClientRect();
 
-            let
-                prevX = getWidth() / 2,
-                prevY = getHeight() / 2;
+            function drag() {
+                sx = clamp(-b.left + Margin, mouseX - b.left - b.width / 2, getWidth() - b.left - b.width - Margin);
+                sy = clamp(-b.top + Margin, mouseY - b.top - b.height / 2, getHeight() - b.top - b.height - Margin);
 
-            function drag(e) {
-                e = e || window.event;
+                dx = lerp(dx, sx, 0.05);
+                dy = lerp(dy, sy, 0.05);
 
-                const dragX = e.pageX, dragY = e.pageY;
+                rx = lerp(rx, clamp(-45, -450 * (sy - dy) / getWidth(), 45), 0.05);
+                ry = lerp(ry, clamp(-45, +450 * (sx - dx) / getHeight(), 45), 0.05);
 
-                let
-                    x = clamp(-b.left + Margin, dragX - b.left - b.width / 2, getWidth() - b.left - b.width - Margin),
-                    y = clamp(-b.top + Margin, dragY - b.top - b.height / 2, getHeight() - b.top - b.height - Margin),
-                    /* x = clamp(-b.left + Margin, dragX - b.left - b.width / 2 + 0 * ((dragX - b.width / 2 > prevX) * 2 - 1), getWidth() - b.left - b.width - Margin),
-                    y = clamp(-b.top + Margin, dragY - b.top - b.height / 2 + 0 * ((dragY - b.height / 2 > prevY) * 2 - 1), getHeight() - b.top - b.height - Margin), */
-                    rotY = clamp(-45, -180 * (b.left - dragX) / 2 / b.left, 45),
-                    rotX = clamp(-45, +180 * (b.top - dragY) / 2 / b.top, 45);
-
-                // console.log(rotX, rotY);
-                card.style.transform = `translate3d(${x}px, ${y}px, 0px) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
-                prevX = x;
-                prevY = y;
+                card.style.transform = `translate3d(${dx}px, ${dy}px, 0px) rotateX(${rx}deg) rotateY(${ry}deg)`;
             }
 
             function mouseup(e) {
-                document.removeEventListener("mousemove", drag);
+                clearInterval(interval);
 
                 // console.log("Drag end");
                 if (isOverlapping(card, getMainCard())) {
@@ -199,12 +227,20 @@ function addCard(container, type, classes = []) {
                 card.style.removeProperty("transform");
                 card.style.removeProperty("z-index");
                 card.classList.add("trans");
+                document.querySelectorAll(".no-hover").forEach(card => card.classList.remove("no-hover"));
+
                 document.removeEventListener("mouseup", mouseup)
+                document.removeEventListener("touchend", mouseup)
             }
 
-            document.addEventListener("mousemove", drag)
-            document.addEventListener("mouseup", mouseup)
-        });
+            console.log("Set interval");
+            interval = setInterval(drag, 5);
+            document.addEventListener("mouseup", mouseup, {"passive": true})
+            document.addEventListener("touchend", mouseup, {"passive": true})
+        }
+
+        card.addEventListener("mousedown", hold);
+        card.addEventListener("touchstart", hold);
     }
 
     card.classList.add("trans");

@@ -142,7 +142,7 @@ body {
     transition: transform ease-out 0.2s;
 }
 
-.trans.my:hover {
+:not(.no-hover).trans.my:hover {
     transform: translateY(-3vw);
     /* z-index: 1; */
 }
