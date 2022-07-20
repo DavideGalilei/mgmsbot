@@ -1,6 +1,12 @@
+function loadScript(src) {
+    let tag = document.createElement('script');
+    tag.src = src;
+    let firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+}
+
 window.addEventListener("load", async (event) => {
     console.log(`Loaded game "${document.title}"`);
-    const Action = window.Action;
 
     const button = document.getElementById("send");
     const input = document.getElementById("input");
@@ -52,7 +58,9 @@ window.addEventListener("load", async (event) => {
         input.value = "";
     });
 
-    window.room.listenCallback = (room, payload) => {
+    window._roomcallback = (room, payload) => {
+        const Action = window.Action;
+
         switch (payload.action) {
             case Action.INFO_LIST: {
                 users = payload.data["users"].reduce((obj, x) => {
@@ -84,4 +92,6 @@ window.addEventListener("load", async (event) => {
             }
         }
     };
+
+    loadScript(window._lib_url);
 });
