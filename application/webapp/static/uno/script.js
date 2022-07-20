@@ -195,8 +195,8 @@ function getCard(type, classes = []) {
                 dx = lerp(dx, sx, 0.05);
                 dy = lerp(dy, sy, 0.05);
 
-                rx = lerp(rx, clamp(-45, -450 * (sy - dy) / getWidth(), 45), 0.05);
-                ry = lerp(ry, clamp(-45, +450 * (sx - dx) / getHeight(), 45), 0.05);
+                rx = lerp(rx, clamp(-45, -450 * (sy - dy) / getWidth(), 45), 0.15);
+                ry = lerp(ry, clamp(-45, +450 * (sx - dx) / getHeight(), 45), 0.15);
 
                 card.style.transform = `translate3d(${dx}px, ${dy}px, 0px) rotateX(${rx}deg) rotateY(${ry}deg)`;
             }
