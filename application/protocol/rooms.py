@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import threading
+import time
 from collections import defaultdict
 from typing import Dict, Optional
 
@@ -59,6 +60,7 @@ class Room:
         self.lock = SuperLock()
         self.connections: Dict[int, Player] = {}
         self.players_cache = Cache({})
+        self.last_activity = time.time()
 
         # asyncio.create_task(room_cleaner(self))
 
@@ -71,7 +73,12 @@ class Room:
             logger.info("Kicked inactive player (is_playing=False)")
             await self.pop(player.user.id)
 
+    def update_activity(self):
+        self.last_activity = time.time()
+
     async def add_player(self, player: Player):
+        self.update_activity()
+
         async with self.lock:
             if not player.is_playing:
                 asyncio.create_task(self.clean_inactive(player))
@@ -89,6 +96,8 @@ class Room:
                 self.connections.pop(user_id)
 
     async def kick(self, player: Player, reason: dict = None):
+        self.update_activity()
+
         async with self.lock:
             with contextlib.suppress(Exception):
                 await player.send_payload(Payload(Action.KICK, data=reason))
@@ -135,11 +144,14 @@ class RoomManager:
     @classmethod
     async def inactive_cleaner(cls, every_seconds: int):
         while not await asyncio.sleep(every_seconds):
+            now = time.time()
+
             for game in AVAILABLE_GAMES:
                 if game in cls.rooms:
                     async with cls.rooms[game]["lock"]:
                         for chat in list(cls.rooms[game]["chats"].keys()):
-                            if not len(cls.rooms[game]["chats"][chat].connections):
+                            room = cls.rooms[game]["chats"][chat]
+                            if not len(room.connections) and room.last_activity < now - every_seconds:
                                 logger.info(
                                     "Cleaned inactive chat (game={game}, {chat})",
                                     chat=chat,
