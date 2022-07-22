@@ -64,5 +64,5 @@ async def answer_game(bot: Client, query: CallbackQuery):
 
     return await bot.answer_callback_query(
         query.id,
-        url=f"http://10.155.108.143:8000/game/{query.game_short_name}?d={data}",
+        url=f"https://f577-79-46-151-160.eu.ngrok.io/game/{query.game_short_name}?d={data}",
     )

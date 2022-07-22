@@ -1,3 +1,10 @@
+function loadScript(src) {
+    let tag = document.createElement('script');
+    tag.src = src;
+    let firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+}
+
 window.addEventListener("load", async (event) => {
     console.log(`Loaded test game "${document.title}"`);
     const Action = window.Action;
@@ -29,7 +36,9 @@ window.addEventListener("load", async (event) => {
         users[player.id].elem.remove();
     }
 
-    window.room.listenCallback = (room, payload) => {
+    window._roomcallback = (room, payload) => {
+        const Action = window.Action;
+
         switch (payload.action) {
             case Action.INFO_LIST: {
                 users = payload.data["users"].reduce((obj, player) => {
@@ -50,4 +59,6 @@ window.addEventListener("load", async (event) => {
         }
         refreshCount();
     };
+
+    loadScript(window._lib_url);
 });
