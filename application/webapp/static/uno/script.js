@@ -614,7 +614,7 @@ window.addEventListener("load", async (event) => {
                         }
                     }
                 }
-                if (host.id !== payload.data["u"]) {
+                if (!host || host.id !== payload.data["u"]) {
                     break;
                 }
                 switch (msg.packetType) {

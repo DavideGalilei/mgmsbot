@@ -31,25 +31,22 @@ class Payload:
         self.kind = kind
         self.data = data if data is not None else {}
 
-    def serialize(self):
-        b = self.kind.value.to_bytes(2, "little", signed=False)
-        jsoned = json.dumps(self.data, separators=(",", ":")).encode()
-        b += len(jsoned).to_bytes(4, "little", signed=False)
-        b += jsoned
-        return b
+    def serialize(self) -> str:
+        return json.dumps(
+            {
+                "a": self.kind.value,
+                "d": self.data,
+            },
+            separators=(",", ":"),
+        )
 
     @staticmethod
-    def deserialize(data: bytes) -> "Payload":
-        stream = BytesIO(data)
-        kind = Action(int.from_bytes(stream.read(2), "little", signed=False))
+    def deserialize(data: str) -> "Payload":
+        jsoned = json.loads(data)
+        kind = Action(jsoned.get("a", 0))
+        data = jsoned.get("d", {})
 
-        length = int.from_bytes(stream.read(4), "little", signed=False)
-        if length > 0x00FFFFFF:
-            raise PayloadTooBig(size=length)
-
-        decoded = "".join(map(chr, stream.read(length)))
-        jsoned = json.loads(decoded)
-        return Payload(kind=kind, data=jsoned)
+        return Payload(kind=kind, data=data)
 
     def __str__(self):
         return f"Payload(kind={Action(self.kind)}, data={self.data})"

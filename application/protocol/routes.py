@@ -53,6 +53,8 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
             await room.add_player(room.players_cache[user_id])
         else:
             logger.info("Client couldn't reconnect (no cache found)")
+            # TODO: fix weird bug related to ghost reconnections
+            # print(room.connections)
             return await websocket.close()
 
     player: Player = room.connections[user_id]

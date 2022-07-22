@@ -40,7 +40,7 @@ class Player:
         self.connection = websocket
 
     async def send_payload(self, p: Payload):
-        await self.connection.send_bytes(p.serialize())
+        await self.connection.send_text(p.serialize())
 
     async def recv_payload(self) -> Payload:
         # Max size is 1MB btw
@@ -50,7 +50,7 @@ class Player:
         # recv() will return None and the connection will be closed with status code 1009.
         # https://websockets.readthedocs.io/en/2.2/
 
-        return Payload.deserialize(await self.connection.receive_bytes())
+        return Payload.deserialize(await self.connection.receive_text())
 
 
 class Room:
