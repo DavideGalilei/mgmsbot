@@ -14,4 +14,5 @@ AVAILABLE_GAMES: Dict[str, Game] = dict(
         name="SyncVideo", description="Play youtube video in sync with other users"
     ),
     uno=Game(name="UNO", description="A cards game"),
+    tanks=Game(name="Tanks", description="Battlefield"),
 )
