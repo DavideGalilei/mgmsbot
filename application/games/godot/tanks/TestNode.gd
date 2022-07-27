@@ -19,6 +19,40 @@ func _roomcallback(args):
 	var Action = window.Action
 	var room = args[0]
 	var payload = args[1]
+	
+	# room.sendUser(window.room.data.decrypted.i, {"a": 123})
+
+	match payload.action:
+		Action.NO_OP:
+			# Ignore
+			pass
+		Action.RECEIVE:
+			# Message from the server
+			pass
+		Action.SEND_USER:
+			# Whisper received from a user
+			pass
+		Action.BROADCAST:
+			# Received broadcast from an user
+			pass
+		Action.INFO_LIST:
+			# Received users list from the server
+			# this occurs only once at the beginning
+			pass
+		Action.JOINED:
+			# A user joined
+			var id = payload.id
+			var name = payload.name
+			var photo = payload.photo
+			
+			if photo == null:
+				pass
+		Action.KICK:
+			# You have been kicked
+			pass
+		Action.LEFT:
+			# A user left
+			pass
 
 	console.log("log", Action, room, payload)
 
