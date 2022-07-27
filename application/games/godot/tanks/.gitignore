@@ -1,3 +1,8 @@
+# https://docs.godotengine.org/en/stable/tutorials/best_practices/version_control_systems.html#files-to-exclude-from-vcs
 .import/
+*.translation
+export_presets.cfg
+.mono/
+
 Export/*
 !Export/.gitkeep
