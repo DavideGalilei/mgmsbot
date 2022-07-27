@@ -10,19 +10,24 @@ func _loadscript(url: String):
 	firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
 
 
-func _roomcallback(room, payload):
-	print("INSIDE CALLBACK")
-	print(room, payload)
+var window = JavaScript.get_interface("window")
+var object = JavaScript.get_interface("Object")
+var console = JavaScript.get_interface("console")
+
+
+func _roomcallback(args):
+	var Action = window.Action
+	var room = args[0]
+	var payload = args[1]
+
+	console.log("log", Action, room, payload)
 
 
 onready var _callback = JavaScript.create_callback(self, "_roomcallback")
-var window = JavaScript.get_interface("window")
 
 
 func _ready():
-	JavaScript.eval("window.set = (p, v) => window[p] = v;", true)
-	window.set("_roomcallback", _callback)
-	window.set("test", 123)
+	window._roomcallback = _callback
 
 	print("Loading %s" % window._lib_url)
 	_loadscript(window._lib_url)
