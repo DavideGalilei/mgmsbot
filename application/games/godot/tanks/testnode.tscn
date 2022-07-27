@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://Player.tscn" type="PackedScene" id=1]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="Polygon2D" type="Polygon2D" parent="."]
+polygon = PoolVector2Array( 106, 80, 27, 149, 91, 47, 312, 85, 281, 229, 133, 169, 146, 106, 64, 144 )
+
+[node name="Player" parent="." instance=ExtResource( 1 )]

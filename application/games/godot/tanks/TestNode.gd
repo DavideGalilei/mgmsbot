@@ -1,6 +1,44 @@
 extends Node2D
 
 
+var player = preload("res://Player.tscn")
+var rand_generate = RandomNumberGenerator.new()
+var players = {}
+
+
+func create_player(id: int, name: String, photo, main := false):
+	print("Adding player")
+
+	var instance = player.instance()
+	players[id] = instance
+
+	instance.is_main = main
+	instance.name = name
+
+	if photo != null:
+		var png_data = Marshalls.base64_to_raw(photo)
+		var image = Image.new()
+		image.load_jpg_from_buffer(png_data)
+		var texture = ImageTexture.new()
+		texture.create_from_image(image)
+		get_node(str(instance) + "/TextureRect").texture = texture
+	
+	
+	var viewport = get_viewport().size
+	instance.position.x = rand_generate.randi_range(0, viewport.x)
+	instance.position.y = rand_generate.randi_range(0, viewport.y)
+
+	add_child(instance)
+
+
+func _js_create_player(args):
+	var user = args[0]
+	console.log("Adding user:", user)
+
+	if user.id != window.room.data.decrypted.i:
+		create_player(user.id, user.name, user.photo)
+
+
 func _loadscript(url: String):
 	var document = JavaScript.get_interface("document")
 
@@ -11,7 +49,6 @@ func _loadscript(url: String):
 
 
 var window = JavaScript.get_interface("window")
-var object = JavaScript.get_interface("Object")
 var console = JavaScript.get_interface("console")
 
 
@@ -34,35 +71,52 @@ func _roomcallback(args):
 			pass
 		Action.BROADCAST:
 			# Received broadcast from an user
-			pass
+			console.log("Received broadcast:", payload)
+			var player = players[payload.data.u]
+			var data = payload.data.data
+			
+			player.position.x = data.pos.x
+			player.position.y = data.pos.y
+			player.rotation = data.rot
 		Action.INFO_LIST:
 			# Received users list from the server
 			# this occurs only once at the beginning
-			pass
+			payload.data.users.forEach(window._add_player)
 		Action.JOINED:
 			# A user joined
-			var id = payload.id
-			var name = payload.name
-			var photo = payload.photo
-			
-			if photo == null:
-				pass
+			console.log("User joined:", payload)
+
+			var id = payload.data.id
+			var name = payload.data.name
+			var photo = payload.data.photo
+
+			create_player(id, name, photo)
 		Action.KICK:
 			# You have been kicked
 			pass
 		Action.LEFT:
 			# A user left
-			pass
+			console.log("User left:", payload)
+			players[payload.data.id].queue_free()
+			players.erase(payload.data.id)
 
 	console.log("log", Action, room, payload)
 
 
-onready var _callback = JavaScript.create_callback(self, "_roomcallback")
+onready var _callback_ref = JavaScript.create_callback(self, "_roomcallback")
+onready var _create_player_ref = JavaScript.create_callback(self, "_js_create_player")
 
 
 func _ready():
-	window._roomcallback = _callback
+	rand_generate.randomize()
 
-	print("Loading %s" % window._lib_url)
-	_loadscript(window._lib_url)
-	print("%s loaded" % window._lib_url)
+	create_player(123, "asd", null, true)
+
+	if OS.has_feature('JavaScript'):
+		window._roomcallback = _callback_ref
+
+		print("Loading %s" % window._lib_url)
+		_loadscript(window._lib_url)
+		print("%s loaded" % window._lib_url)
+
+		window._add_player = _create_player_ref

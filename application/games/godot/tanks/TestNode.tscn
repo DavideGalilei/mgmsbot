@@ -1,6 +1,11 @@
-[gd_scene load_steps=2 format=2]
+[gd_scene load_steps=3 format=2]
 
 [ext_resource path="res://TestNode.gd" type="Script" id=1]
+
+[sub_resource type="Curve2D" id=1]
+_data = {
+"points": PoolVector2Array( 0, 0, 0, 0, 973, 43, 0, 0, 0, 0, 943, 543, 0, 0, 0, 0, 55, 553, 0, 0, 0, 0, 60, 37, 0, 0, 0, 0, 976, 39 )
+}
 
 [node name="TestNode" type="Node2D"]
 script = ExtResource( 1 )
@@ -14,4 +19,12 @@ text = "Test test test tanks test AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 autowrap = true
 
 [node name="Polygon2D" type="Polygon2D" parent="."]
+visible = false
 polygon = PoolVector2Array( 75, 195, 278, 466, 337, 262, 505, 311, 581, 456, 883, 351, 840, 220, 657, 161, 885, 108, 651, 38, 512, 44, 351, 105, 240, 93, 221, 167, 151, 160 )
+
+[node name="Path2D" type="Path2D" parent="."]
+curve = SubResource( 1 )
+
+[node name="PathFollow2D" type="PathFollow2D" parent="Path2D"]
+position = Vector2( 973, 43 )
+rotation = 1.63073
