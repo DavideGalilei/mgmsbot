@@ -10,16 +10,18 @@
         LEFT: 8,
     });
 
+    window.DEBUG = window.DEBUG !== undefined ? window.DEBUG : false;
+
     const actionValueMap = window.ActionString = Object.assign({}, ...Object.entries(Action).map(([a, b]) => ({[b]: a})));
 
     function makePayload(payload) {
-        console.log("sent:", payload)
+        if (window.DEBUG) console.log("sent:", payload)
         return JSON.stringify({"a": payload.action, "d": payload.data});
     }
 
     function decodePayload(payload) {
         const jsoned = JSON.parse(payload);
-        console.log("received:", jsoned);
+        if (window.DEBUG) console.log("received:", jsoned);
 
         return {
             action: jsoned["a"],

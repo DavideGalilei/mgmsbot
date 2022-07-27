@@ -36,6 +36,11 @@ class Player:
         self.is_playing = playing
         self.connection: Optional[WebSocket] = None
 
+    def __str__(self):
+        return f"Player(uid={self.user.id!r}, is_playing={self.is_playing!r}, name={self.user.first_name!r})"
+
+    __repr__ = __str__
+
     def set_conn(self, websocket: WebSocket):
         self.connection = websocket
 
@@ -64,6 +69,9 @@ class Room:
 
         # asyncio.create_task(room_cleaner(self))
 
+    def __str__(self):
+        return f"Room(game={self.game_name!r}, connections={self.connections})"
+
     async def clean_inactive(self, player: Player):
         await asyncio.sleep(20)
         if (
@@ -80,8 +88,8 @@ class Room:
         self.update_activity()
 
         async with self.lock:
-            if not player.is_playing:
-                asyncio.create_task(self.clean_inactive(player))
+            # if not player.is_playing:
+            #     asyncio.create_task(self.clean_inactive(player))
 
             self.players_cache[player.user.id] = player
 
@@ -104,6 +112,7 @@ class Room:
 
             if player.user.id in self.connections:
                 self.connections.pop(player.user.id)
+
             if (
                 player.connection.application_state == WebSocketState.CONNECTED
                 and player.connection.client_state == WebSocketState.CONNECTED

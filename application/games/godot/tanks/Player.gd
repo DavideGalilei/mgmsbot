@@ -50,15 +50,15 @@ func _ready():
 		add_child(_timer)
 
 		_timer.connect("timeout", self, "_on_Timer_timeout")
-		_timer.set_wait_time(0.2)
+		_timer.set_wait_time(0.05)
 		_timer.set_one_shot(false) # Make sure it loops
 		_timer.start()
 
 
-func _obj_from_dict(dict: Dictionary):
+func _obj_from_dict(dict: Dictionary) -> JavaScriptObject:
 	var obj = JavaScript.create_object("Object")
 	
-	for key in dict.keys:
+	for key in dict.keys():
 		var value = dict.get(key)
 
 		if typeof(value) == TYPE_DICTIONARY:
@@ -70,14 +70,6 @@ func _obj_from_dict(dict: Dictionary):
 
 
 func _on_Timer_timeout():
-	console.log(_obj_from_dict({
-		"pos": {
-			"x": self.position.x,
-			"y": self.position.y,
-		},
-		"rot": self.rotation,
-	}))
-
 	if window.room != null:
 		window.room.broadcast(
 			_obj_from_dict(

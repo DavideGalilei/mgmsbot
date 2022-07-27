@@ -41,6 +41,7 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
     room: Room = shared.manager.rooms[game_name]["chats"][decrypted["c"]]
 
     user_id = decrypted["i"]
+    reconnected = False
 
     if user_id in room.connections and room.connections[user_id].is_playing:
         logger.info("Closed connection: player is already playing")
@@ -50,7 +51,9 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
         if user_id in room.players_cache:
             # could find a cached player
             logger.success("Client reconnected")
-            await room.add_player(room.players_cache[user_id])
+            cached_player: Player = room.players_cache[user_id]
+            cached_player.is_playing = reconnected = True
+            await room.add_player(cached_player)
         else:
             logger.info("Client couldn't reconnect (no cache found)")
             # TODO: fix weird bug related to ghost reconnections
@@ -58,7 +61,6 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
             return await websocket.close()
 
     player: Player = room.connections[user_id]
-    player.is_playing = True
 
     max_connections_reached = False
     async with room.lock:
@@ -78,7 +80,9 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
     await websocket.accept()
     player.set_conn(websocket)
 
-    await room.add_player(player)
+    if not reconnected:
+        player.is_playing = True
+        await room.add_player(player)
 
     # await shared.bot.send_message(user_id, "Opened websocket")
 
@@ -119,7 +123,7 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
 
             if data.kind == Action.BROADCAST:
                 for uid, p in room.connections.items():
-                    if uid != player.user.id and p.connection is not None:
+                    if uid != player.user.id and p.connection is not None and p.is_playing:
                         await p.send_payload(
                             Payload(
                                 kind=data.kind,
@@ -146,6 +150,8 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
     except PayloadTooBig:
         logger.info("The payload size is too big")
     finally:
+        logger.info("Player disconnected, broadcasting event...")
+
         await room.kick(player)
 
         # if not len(room.connections):
