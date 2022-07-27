@@ -6,8 +6,21 @@ var rand_generate = RandomNumberGenerator.new()
 var players = {}
 
 
+func set_photo(instance, photo):
+	if photo == null:
+		console.warn("Invalid null photo for player")
+		return
+
+	var png_data = Marshalls.base64_to_raw(photo)
+	var image = Image.new()
+	image.load_jpg_from_buffer(png_data)
+	var texture = ImageTexture.new()
+	texture.create_from_image(image)
+	instance.get_node("TextureRect").texture = texture
+
+
 func create_player(id: int, name: String, photo, main := false):
-	print("Adding player")
+	console.warn("Adding player")
 
 	var instance = player.instance()
 	players[id] = instance
@@ -16,14 +29,8 @@ func create_player(id: int, name: String, photo, main := false):
 	instance.name = name
 
 	if photo != null:
-		var png_data = Marshalls.base64_to_raw(photo)
-		var image = Image.new()
-		image.load_jpg_from_buffer(png_data)
-		var texture = ImageTexture.new()
-		texture.create_from_image(image)
-		get_node(str(instance) + "/TextureRect").texture = texture
-	
-	
+		set_photo(instance, photo)
+
 	var viewport = get_viewport().size
 	instance.position.x = rand_generate.randi_range(0, viewport.x)
 	instance.position.y = rand_generate.randi_range(0, viewport.y)
@@ -35,8 +42,12 @@ func _js_create_player(args):
 	var user = args[0]
 	console.log("Adding user:", user)
 
-	if user.id != window.room.data.decrypted.i:
-		create_player(user.id, user.name, user.photo)
+	create_player(user.id, user.name, user.photo, user.id == window.room.data.decrypted.i)
+	
+	#if user.photo != null:
+	#	set_photo(players[user.id], user.photo)
+
+onready var _create_player_ref = JavaScript.create_callback(self, "_js_create_player")
 
 
 func _loadscript(url: String):
@@ -71,7 +82,7 @@ func _roomcallback(args):
 			pass
 		Action.BROADCAST:
 			# Received broadcast from an user
-			console.log("Received broadcast:", payload)
+			# console.log("Received broadcast:", payload)
 			var player = players[payload.data.u]
 			var data = payload.data.data
 			
@@ -100,23 +111,23 @@ func _roomcallback(args):
 			players[payload.data.id].queue_free()
 			players.erase(payload.data.id)
 
-	console.log("log", Action, room, payload)
+	# console.log("log", Action, room, payload)
 
 
 onready var _callback_ref = JavaScript.create_callback(self, "_roomcallback")
-onready var _create_player_ref = JavaScript.create_callback(self, "_js_create_player")
 
 
 func _ready():
 	rand_generate.randomize()
 
-	create_player(123, "asd", null, true)
+	if OS.has_feature("JavaScript"):
+		window.DEBUG = false
 
-	if OS.has_feature('JavaScript'):
 		window._roomcallback = _callback_ref
+		window._add_player = _create_player_ref
 
 		print("Loading %s" % window._lib_url)
 		_loadscript(window._lib_url)
 		print("%s loaded" % window._lib_url)
-
-		window._add_player = _create_player_ref
+	else:
+		create_player(0, "asd", null, true)

@@ -45,7 +45,7 @@ onready var console = JavaScript.get_interface("console")
 
 
 func _ready():
-	if self.is_main:
+	if OS.has_feature("JavaScript") and self.is_main:
 		_timer = Timer.new()
 		add_child(_timer)
 
