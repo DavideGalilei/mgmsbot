@@ -35,6 +35,9 @@ async def main():
         routes=[
             Mount("/static", SafeStaticFiles(directory=static), name="static"),
         ],
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
     )
     app.include_router(game_router)
     app.include_router(ws_router)
