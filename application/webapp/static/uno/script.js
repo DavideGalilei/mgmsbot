@@ -67,8 +67,6 @@ function randomPic(id) {
     return canvas;
 }
 
-const sign = (n) => (!!n) * 2 - 1;
-
 
 // Get mouse pos
 // https://stackoverflow.com/a/22986867
@@ -106,7 +104,12 @@ const PacketType = Object.freeze({
     UserAddCard: 5,
     UserRemoveCard: 6,
     SelectedColor: 7,
-    TakeCard: 8
+    TakeCard: 8,
+    SkipTurn: 9,
+    SayUno: 10,
+    ForgotUno: 11,
+    UserCardsUpdate: 12,
+    AcceptCards: 13
 });
 
 // User variables
@@ -120,12 +123,41 @@ let mainCard = null;
 let myCards = [];
 let players = [];
 let userPlaying = null;
+let tookCard = false;
 let playersIDs = [];
 let host = null;
 let callbacks = {};
 
+let pendingCards = 0;
+let takeCardButton = null;
+
+let skipTurn = null;
+
 function getMainCard() {
     return document.querySelector(".main");
+}
+
+function updateCardsCount(count) {
+    let span = takeCardButton.getElementsByTagName("span")[0];
+    if (count === null || count === 0 || count === undefined) {
+        span.innerText = "take a card";
+    } else if (userPlaying === me.id) {
+        span.innerText = `take a card (${count})`;
+    } else {
+        span.innerText = "take a card";
+    }
+}
+
+function updateOutlineColor(user_id, color) {
+    if (user_id !== me.id) {
+        document.getElementById("game").classList.remove("your-turn");
+        if (!users[user_id])
+            return;
+        let img = users[user_id].player.player.getElementsByClassName("player-photo")[0];
+        img.style.outlineColor = color;
+    } else {
+        document.getElementById("game").classList.add("your-turn");
+    }
 }
 
 function setMainCard(card) {
@@ -148,11 +180,89 @@ const Colors = Object.freeze({
 
 function setMainColor(color) {
     console.log(`setMainColor(${color})`);
-    getMainCard().style.border = `solid 1vw ${Colors[color]}`;
+    getMainCard().style.borderColor = `${Colors[color]}`;
 }
+
+let hostSaidUno = false;
+let hostCanBeReported = false;
 
 function addCard(container, type, classes = []) {
     container.appendChild(getCard(type, classes));
+    hostSaidUno = false;
+    hostCanBeReported = false;
+}
+
+function getPos(element) {
+    let pos = element.getBoundingClientRect();
+    let x = pos.x + (pos.width / 2);
+    let y = pos.y + (pos.height / 2);
+
+    return {"x": x, "y": y, "minY": pos.y - (pos.height / 2), "maxY": pos.y + (pos.height + 2), "width": pos.width, "height": pos.height, "rawX": pos.x, "rawY": pos.y};
+}
+
+function findChildren(element, parent) {
+    for (let i = 0; i < parent.children.length; i++) {
+        if (parent.children[i] === element) {
+            return i;
+        }
+    }
+}
+
+function insertCard(card, index) {
+    let oldIndex = findChildren(card, myDeck);
+    myDeck.removeChild(card);
+    let cardType = myCards[oldIndex];
+    console.log(cardType, index);
+    myCards.splice(oldIndex, 1);
+    myCards.splice(index, 0, cardType);
+    if (index < myDeck.children.length) {
+        if (oldIndex < index || index === 0)
+            myDeck.insertBefore(card, myDeck.children[index]);
+        else
+            myDeck.insertBefore(card, myDeck.children[index].nextSibling);
+    }
+    else
+        myDeck.appendChild(card);
+}
+
+function movingCard(card, startingX, startingY) {
+    let pos = getPos(card);
+
+    if (mouseY < startingY || mouseY > (startingY + pos.height))
+        return;
+
+    for (let i = 0; i <= myDeck.children.length; i++) {
+        if (i > 0 && i !== myDeck.children.length) {
+            let left = myDeck.children[i - 1];
+            let right = myDeck.children[i];
+            if (left === card || right === card)
+                continue;
+            let leftPos = getPos(left);
+            let rightPos = getPos(right);
+            if (mouseX > leftPos.x && mouseX < rightPos.x) {
+                insertCard(card, i-1);
+                return getPos(card).x - mouseX;
+            }
+        } else if (i === 0) {
+            let first = myDeck.children[i];
+            if (first === card)
+                continue;
+            let firstPos = getPos(first);
+            if (mouseX < firstPos.x && firstPos.x - mouseX < (pos.width / 2)) {
+                insertCard(card, i);
+                return getPos(card).x - mouseX;
+            }
+        } else if (i === myDeck.children.length) {
+            let last = myDeck.children[i-1];
+            if (last === card)
+                continue;
+            let lastPos = getPos(last);
+            if (mouseX > lastPos.x && mouseX - lastPos.x < (pos.width / 2)) {
+                insertCard(card, i-1);
+                return getPos(card).x - mouseX;
+            }
+        }
+    }
 }
 
 function getCard(type, classes = []) {
@@ -187,10 +297,21 @@ function getCard(type, classes = []) {
                 rx = 0, ry = 0;
 
             let b = card.getBoundingClientRect();
+            let sxOffset = 0;
 
             function drag() {
-                sx = clamp(-b.left + Margin, mouseX - b.left - b.width / 2, getWidth() - b.left - b.width - Margin);
+                sx = clamp(-b.left + Margin, mouseX - b.left - b.width / 2, getWidth() - b.left - b.width - Margin) - sxOffset;
                 sy = clamp(-b.top + Margin, mouseY - b.top - b.height / 2, getHeight() - b.top - b.height - Margin);
+
+                // Swap cards in deck
+                let xDiff = movingCard(card, b.x - sxOffset, b.y);
+                if (xDiff) {
+                    sxOffset += xDiff + (sx - dx);
+                    sx -= xDiff + (sx - dx);
+
+                    dx = sx;
+                    dy = sy;
+                }
 
                 dx = lerp(dx, sx, 0.05);
                 dy = lerp(dy, sy, 0.05);
@@ -198,18 +319,20 @@ function getCard(type, classes = []) {
                 rx = lerp(rx, clamp(-45, -450 * (sy - dy) / getWidth(), 45), 0.15);
                 ry = lerp(ry, clamp(-45, +450 * (sx - dx) / getHeight(), 45), 0.15);
 
-                card.style.transform = `translate3d(${dx}px, ${dy}px, 0px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+                // card.style.transform = `translate3d(${dx}px, ${dy}px, 0px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+                card.style.transform = `perspective(40cm) translate3d(${dx}px, ${dy}px, 0px) rotateX(${rx}deg) rotateY(${ry}deg)`;
+                // card.style.transform = `perspective(1000px) translate3d(${dx}px, ${dy}px, 0px) scale(1.2) rotate3d(${sign(rx) * 100}, 0, 0, ${rx}deg) rotate3d(0, ${sign(ry) * 100}, 0, ${ry}deg)`;
             }
 
-            function mouseup(e) {
+            function mouseup(_) {
                 clearInterval(interval);
 
                 // console.log("Drag end");
-                if (isOverlapping(card, getMainCard())) {
+                if (isOverlapping(card, getMainCard()) && players.length >= 1) {
                     // console.log("Overlapping");
                     let cardType = card.getAttribute("card-type");
                     let uuid = uuid4();
-                    callbacks[uuid] = () => {
+                    callbacks[uuid] = (newUserPlaying, newPendingCards) => {
                         let cardIndex = -1;
                         for (let i = 0; i < myDeck.children.length; i++) {
                             if (myDeck.children[i] === card) {
@@ -217,9 +340,27 @@ function getCard(type, classes = []) {
                                 break;
                             }
                         }
+                        updateOutlineColor(userPlaying, "#000000");
+                        userPlaying = newUserPlaying;
+                        updateOutlineColor(userPlaying, "#8FBC8F");
+                        if (newPendingCards !== undefined && newPendingCards !== null) {
+                            pendingCards = newPendingCards;
+                            updateCardsCount(pendingCards);
+                        }
                         myDeck.removeChild(card);
                         myCards.splice(cardIndex, 1);
+                        hostSaidUno = false;
+                        hostCanBeReported = false;
+                        setTimeout(
+                            () => {
+                                if (myDeck.children.length === 1) {
+                                    hostCanBeReported = true;
+                                }
+                            },
+                            5000
+                        );
                         setMainCard(cardType);
+                        skipTurn.style.background = "#9a9a9a";
                     };
                     timeout(10 * 1000).then(() => delete callbacks[uuid]);
                     room.sendUser(host.id, {"packetType": PacketType.CardOverlap, "uid": uuid, "cardType": cardType});
@@ -260,6 +401,10 @@ const startingCards = 7;
 
 class Deck {
     constructor() {
+        this.initCards();
+    }
+
+    initCards() {
         this.cards = [];
 
         colors.forEach((color) => {
@@ -278,7 +423,12 @@ class Deck {
     }
 
     pickCard() {
-        return this.cards.length > 0 && this.cards.splice(Math.floor(Math.random() * (this.cards.length - 1)), 1)[0];
+        if (this.cards.length > 0)
+            return this.cards.splice(Math.floor(Math.random() * (this.cards.length - 1)), 1)[0];
+        else {
+            this.initCards();
+            return this.pickCard();
+        }
     }
 
     insertCard(card) {
@@ -298,7 +448,8 @@ function isOverlapping(element, other) {
         a.top > b.bottom);
 }
 
-window.addEventListener("load", async (event) => {
+window.addEventListener("load", async (_) => {
+    window.DEBUG = true;
     console.log(`Loaded game "${document.title}"`);
 
     playersDiv = document.getElementById("players");
@@ -308,16 +459,45 @@ window.addEventListener("load", async (event) => {
     let colors = document.getElementsByClassName("color");
 
     for (let i = 0; i < colors.length; i++) {
-        colors[i].addEventListener("click", (e) => {
+        colors[i].addEventListener("click", (_) => {
             room.sendUser(host.id, {"packetType": PacketType.SelectedColor, "color": colors[i].id});
             colorBar.style.display = "none";
         });
     }
 
-    let takeCardButton = document.getElementById("take-card");
+    skipTurn = document.getElementById("skip-turn");
+    skipTurn.style.background = "#9a9a9a";
 
-    takeCardButton.addEventListener("click", (e) => {
-        room.sendUser(host.id, {"packetType": PacketType.TakeCard});
+    skipTurn.addEventListener("click", (_) => {
+        skipTurn.style.background = "#9a9a9a";
+        room.sendUser(host.id, {"packetType": PacketType.SkipTurn});
+    });
+
+    takeCardButton = document.getElementById("take-card");
+
+    takeCardButton.addEventListener("click", (_) => {
+        if (players.length >= 1 && userPlaying === me.id && pendingCards === 0) {
+            skipTurn.style.background = "#8FBC8F";
+            room.sendUser(host.id, {"packetType": PacketType.TakeCard});
+        } else if (pendingCards > 0 && userPlaying === me.id && players.length >= 1) {
+            room.sendUser(host.id, {"packetType": PacketType.AcceptCards});
+            updateCardsCount(null);
+            if (host.id !== me.id)
+                pendingCards = 0;
+        }
+
+    });
+
+    let sayUnoButton = document.getElementById("say-uno");
+
+    sayUnoButton.addEventListener("click", (_) => {
+        room.sendUser(host.id, {"packetType": PacketType.SayUno});
+    });
+
+    let forgotUnoButton = document.getElementById("forgot-uno");
+
+    forgotUnoButton.addEventListener("click", (_) => {
+        room.sendUser(host.id, {"packetType": PacketType.ForgotUno});
     });
 
     // Host variables
@@ -341,6 +521,11 @@ window.addEventListener("load", async (event) => {
                 userPlaying = playersIDs[playersIDs.length - 1];
             }
         }
+        if ((userPlaying !== me.id && users[userPlaying].player.deck.children.length === 0) || (userPlaying === me.id && myCards.length === 0)) {
+            nextPlayer();
+            return;
+        }
+        tookCard = false;
         console.log(`TURNO DI ${userPlaying}`);
     }
 
@@ -361,9 +546,13 @@ window.addEventListener("load", async (event) => {
             this.player = player;
             this.user = user;
             this.deck = deck;
+            this.saidUno = false;
+            this.canBeReported = false;
 
-            for (let i = 0; i < startingCards; i++) {
-                this.addCard();
+            if (me.id === host.id) {
+                for (let i = 0; i < startingCards; i++) {
+                    this.addCard();
+                }
             }
 
             playersDiv.appendChild(player);
@@ -378,12 +567,32 @@ window.addEventListener("load", async (event) => {
         }
 
         addCard() {
+            this.saidUno = false;
+            this.canBeReported = false;
             addCard(this.deck, "stroke-back");
+        }
+
+        clearCards() {
+            while (this.deck.children.length > 0) {
+                this.deck.removeChild(this.deck.children[0]);
+            }
         }
 
         removeCard() {
             if (this.deck.children.length > 0) {
                 this.deck.removeChild(this.deck.children[0]);
+            }
+            this.saidUno = false;
+            this.canBeReported = false;
+            if (this.deck.children.length === 1) {
+                setTimeout(
+                    () => {
+                            if (this.deck.children.length === 1 && this.saidUno === false) {
+                                this.canBeReported = true;
+                            }
+                        },
+                    5000
+                );
             }
         }
 
@@ -391,14 +600,22 @@ window.addEventListener("load", async (event) => {
 
     function hostInitialization(payload, resetUsers = true) {
         myCards = [];
+        pendingCards = 0;
         while (myDeck != null && myDeck.children.length > 0) {
             myDeck.removeChild(myDeck.children[0]);
         }
         if (resetUsers) {
             users = {};
             players = [];
+            me = {"id": room.data["decrypted"].i}
+
             payload.data["users"].forEach((user, index) => {
                 console.log(user.id, user.name);
+
+                if (index === 0) {
+                    console.log(`Host: ${user.name}`);
+                    host = user;
+                }
 
                 if (user.id !== room.data["decrypted"].i) {
                     user.player = new Player(user);
@@ -406,10 +623,6 @@ window.addEventListener("load", async (event) => {
                 } else {
                     playersIDs.push(user.id);
                     me = user;
-                }
-                if (index === 0) {
-                    console.log(`Host: ${user.name}`);
-                    host = user;
                 }
             });
         }
@@ -477,11 +690,23 @@ window.addEventListener("load", async (event) => {
                             playersCards[payload.data.id].push(initialDeck.pickCard());
                         }
                     }
+                    let playersCardsCount = {};
+                    playersCardsCount[me.id] = myCards.length;
+                    for (const [key, value] of Object.entries(playersCards)) {
+                        playersCardsCount[key] = value.length;
+                    }
                     room.sendUser(payload.data.id, {
                         packetType: PacketType.GameInit,
                         "cards": playersCards[payload.data.id],
+                        "userPlaying": userPlaying,
                         "mainCard": mainCard,
-                        "started": started
+                        "started": started,
+                        "cardsCount": playersCardsCount
+                    });
+                    room.broadcast({
+                       "packetType": PacketType.UserCardsUpdate,
+                       "user": payload.data.id,
+                       "cards": playersCards[payload.data.id].length
                     });
                 }
                 break;
@@ -504,19 +729,43 @@ window.addEventListener("load", async (event) => {
                         hostInitialization(payload, false);
                     }
                 }
+                if (host.id === me.id && userPlaying === payload.data.id) {
+                    nextPlayer();
+                    updateOutlineColor(userPlaying, "#8FBC8F");
+                    players.forEach((player) => {
+                        if (player.user.id !== me.id) {
+                            room.sendUser(player.user.id, {
+                                "packetType": PacketType.MainCardUpdate,
+                                "cardType": mainCard,
+                                "player": null,
+                                "userPlaying": userPlaying
+                            });
+                        }
+                    });
+                }
                 break;
             }
             case Action.BROADCAST: {
                 if (host.id !== payload.data["u"]) {
                     break;
                 }
-                let msg = payload.data.data.msg;
+                let msg = payload.data.data;
                 if (!msg) break;
 
                 switch (msg.packetType) {
                     case PacketType.UserAddCard: {
                         handleUserAdd(msg);
                         break;
+                    }
+                    case PacketType.UserCardsUpdate: {
+                        let user = msg.user;
+                        let cards = msg.cards;
+                        if (user !== me.id) {
+                            users[user].player.clearCards();
+                            for (let i = 0; i < cards; i++) {
+                                users[user].player.addCard();
+                            }
+                        }
                     }
                 }
                 break;
@@ -526,49 +775,58 @@ window.addEventListener("load", async (event) => {
                 let sender = payload.data["u"];
                 if (host === me) {
                     switch (msg.packetType) {
+                        case PacketType.AcceptCards: {
+                            if (userPlaying === sender) {
+                                for (let i = 0; i < pendingCards; i++) {
+                                    let card = initialDeck.pickCard();
+                                    console.log("got", card);
+                                    room.broadcast({
+                                        "packetType": PacketType.UserAddCard,
+                                        "user": userPlaying,
+                                        "card": card
+                                    });
+                                    handleUserAdd({
+                                        "packetType": PacketType.UserAddCard,
+                                        "user": userPlaying,
+                                        "card": card
+                                    });
+                                }
+                                pendingCards = 0;
+                            }
+                            break;
+                        }
                         case PacketType.CardOverlap: {
                             if (userPlaying === sender) {
                                 let cardChunks = msg.cardType.split("-", 2);
                                 let mainCardChunks = mainCard.split("-", 2);
-                                if (cardChunks[0] === "wild" || cardChunks[0] === mainCardChunks[0] || mainCardChunks[1] === cardChunks[1]) {
-                                    nextPlayer();
-                                    if (msg.cardType.endsWith("plus")) {
-                                        for (let i = 0; i < 2; i++) {
-                                            let card = initialDeck.pickCard();
-                                            room.broadcast({
-                                                "packetType": PacketType.UserAddCard,
-                                                "user": userPlaying,
-                                                "card": card
-                                            });
-                                            handleUserAdd({
-                                                "packetType": PacketType.UserAddCard,
-                                                "user": userPlaying,
-                                                "card": card
-                                            });
-                                        }
-                                    } else if (msg.cardType === "wild-0") {
-                                        for (let i = 0; i < 4; i++) {
-                                            let card = initialDeck.pickCard();
-                                            room.broadcast({
-                                                "packetType": PacketType.UserAddCard,
-                                                "user": userPlaying,
-                                                "card": card
-                                            });
-                                            handleUserAdd({
-                                                "packetType": PacketType.UserAddCard,
-                                                "user": userPlaying,
-                                                "card": card
-                                            });
-                                        }
-                                    } else if (msg.cardType.endsWith("swap")) {
+                                if (((cardChunks[0] === "wild" && mainCardChunks[0] !== "wild") || cardChunks[0] === mainCardChunks[0] || mainCardChunks[1] === cardChunks[1]) && !(!msg.cardType.endsWith("plus") && msg.cardType !== "wild-0" && pendingCards > 0)) {
+
+                                    updateOutlineColor(userPlaying, "#000000");
+
+                                    if (msg.cardType.endsWith("swap")) {
                                         flowDirection = !flowDirection;
+                                        if (players.length === 1) {
+                                            nextPlayer();
+                                        }
+                                    }
+
+                                    nextPlayer();
+
+                                    if (msg.cardType.endsWith("plus")) {
+                                        pendingCards += 2;
+                                    } else if (msg.cardType === "wild-0") {
+                                        pendingCards += 4;
                                     } else if (msg.cardType.endsWith("stop")) {
                                         nextPlayer();
                                     }
+                                    updateCardsCount(pendingCards);
                                     room.sendUser(sender, {
                                         "packetType": PacketType.CardOverlapSuccessful,
-                                        "uid": msg.uid
+                                        "userPlaying": userPlaying,
+                                        "uid": msg.uid,
+                                        "pendingCards": pendingCards
                                     });
+                                    updateOutlineColor(userPlaying, "#8FBC8F");
                                     setMainCard(msg.cardType);
                                     setMainColor();
                                     if (sender !== me.id) {
@@ -582,7 +840,8 @@ window.addEventListener("load", async (event) => {
                                                 "packetType": PacketType.MainCardUpdate,
                                                 "cardType": msg.cardType,
                                                 "player": sender,
-                                                "userPlaying": userPlaying
+                                                "userPlaying": userPlaying,
+                                                "pendingCards": pendingCards
                                             });
                                         }
                                     });
@@ -610,6 +869,82 @@ window.addEventListener("load", async (event) => {
                             break;
                         }
                         case PacketType.TakeCard: {
+                            if (!tookCard && userPlaying === sender) {
+                                let card = initialDeck.pickCard();
+                                room.broadcast({
+                                    "packetType": PacketType.UserAddCard,
+                                    "user": userPlaying,
+                                    "card": card
+                                });
+                                handleUserAdd({
+                                    "packetType": PacketType.UserAddCard,
+                                    "user": userPlaying,
+                                    "card": card
+                                });
+                                tookCard = true;
+                            }
+                            break;
+                        }
+                        case PacketType.SkipTurn: {
+                            if (userPlaying === sender && tookCard) {
+                                updateOutlineColor(userPlaying, "#000000");
+                                nextPlayer();
+                                updateOutlineColor(userPlaying, "#8FBC8F");
+                                updateCardsCount(pendingCards);
+                                players.forEach((player) => {
+                                    if (player.user.id !== me.id) {
+                                        room.sendUser(player.user.id, {
+                                            "packetType": PacketType.MainCardUpdate,
+                                            "cardType": mainCard,
+                                            "player": null,
+                                            "userPlaying": userPlaying,
+                                            "pendingCards": pendingCards
+                                        });
+                                    }
+                                });
+                            }
+                            break;
+                        }
+                        case PacketType.SayUno: {
+                            if (sender !== me.id) {
+                                let player = users[sender].player;
+                                if (player.deck.children.length === 1) {
+                                    player.saidUno = true;
+                                }
+                            } else {
+                                hostSaidUno = true;
+                            }
+                            break;
+                        }
+                        case PacketType.ForgotUno: {
+                            players.forEach((player) => {
+                                if (player.saidUno === false && player.canBeReported) {
+                                    let card = initialDeck.pickCard();
+                                    room.broadcast({
+                                        "packetType": PacketType.UserAddCard,
+                                        "user": player.user.id,
+                                        "card": card
+                                    });
+                                    handleUserAdd({
+                                        "packetType": PacketType.UserAddCard,
+                                        "user": player.user.id,
+                                        "card": card
+                                    });
+                                }
+                            });
+                            if (myDeck.children.length === 1 && hostSaidUno === false && hostCanBeReported) {
+                                let card = initialDeck.pickCard();
+                                room.broadcast({
+                                    "packetType": PacketType.UserAddCard,
+                                    "user": me.id,
+                                    "card": card
+                                });
+                                handleUserAdd({
+                                    "packetType": PacketType.UserAddCard,
+                                    "user": me.id,
+                                    "card": card
+                                });
+                            }
                             break;
                         }
                     }
@@ -624,11 +959,34 @@ window.addEventListener("load", async (event) => {
                             break;
                         }
                         setMainCard(msg.mainCard);
+                        let card_chunks = mainCard.split("-");
+                        if (card_chunks.length >= 3) {
+                            let selectedColor = card_chunks[0];
+                            setMainColor(selectedColor);
+                        }
+                        userPlaying = msg.userPlaying;
+                        updateOutlineColor(userPlaying, "#8FBC8F");
                         msg.cards.forEach((card) => {
                             if (!card) return;
                             myCards.push(card);
                             addCard(myDeck, card, ["my"]);
                         });
+
+                        if (msg.cardsCount) {
+                            for (const [key, value] of Object.entries(msg.cardsCount)) {
+                                if (parseInt(key) !== me.id) {
+                                    for (let i = 0; i < value; i++)
+                                        users[key].player.addCard();
+                                }
+                            }
+                        } else {
+                            for (const [_, value] of Object.entries(playersCards)) {
+                                for (let i = 0; i < startingCards; i++)
+                                    value.addCard();
+                            }
+                        }
+
+
                         break;
                     }
                     case PacketType.GameStarted: {
@@ -646,13 +1004,21 @@ window.addEventListener("load", async (event) => {
                         if (msg.player !== null) {
                             users[msg.player].player.removeCard();
                         }
+
+                        updateOutlineColor(userPlaying, "#000000");
                         userPlaying = msg.userPlaying;
+                        updateOutlineColor(userPlaying, "#8FBC8F");
+
+                        if (msg.pendingCards !== undefined && msg.pendingCards !== null) {
+                            pendingCards = msg.pendingCards;
+                            updateCardsCount(pendingCards);
+                        }
                         break;
                     }
                     case PacketType.CardOverlapSuccessful: {
-                        callbacks[msg.uid]();
+                        callbacks[msg.uid](msg.userPlaying, msg.pendingCards);
                         if (mainCard.startsWith("wild")) {
-                            colorBar.style.display = "";
+                            colorBar.style.removeProperty("display");
                         }
                         break;
                     }
