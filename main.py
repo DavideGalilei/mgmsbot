@@ -103,6 +103,7 @@ async def main():
             host=shared.DOMAIN,
             port=int(os.getenv("PORT", 8000)),
             proxy_headers=True,
+            forwarded_allow_ips="*",
         ),
         daemon=True,
     ).start()
