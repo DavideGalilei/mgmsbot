@@ -7,6 +7,8 @@ class Config:
     SALT: bytes
     SECRET: str
 
+    URL: str
+
     bot: Client
     manager: RoomManager
 
