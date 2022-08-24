@@ -45,6 +45,6 @@ strings = {
                     Button("@ try me", "switch_inline_query_current_chat", "")
                 ),
             }
-        }.get(lang, "en"),
+        }.get(lang or "en"),
     }
 }

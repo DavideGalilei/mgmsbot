@@ -30,6 +30,10 @@ FMT = "[{time}] [<bold>{level}</bold>] - {name}:{function}:{line} - <level>{mess
 
 
 async def main():
+    logger.info("Starting...")
+    logger.info("Loading env vars...")
+    load_dotenv(root / ".env")
+
     shared.DOMAIN = os.getenv("DOMAIN", "0.0.0.0")
     shared.URL = os.getenv("URL", "http://localhost:8000")
 
@@ -52,11 +56,6 @@ async def main():
         handlers=[{"sink": sys.stderr, "format": FMT}],
         extra={"colorize": True},
     )
-
-    logger.info("Starting...")
-
-    logger.info("Loading env vars...")
-    load_dotenv(root / ".env")
 
     shared.SALT = bytes.fromhex(os.getenv("SALT"))
     shared.SECRET = os.getenv("SECRET")
