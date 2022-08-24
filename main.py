@@ -30,10 +30,16 @@ FMT = "[{time}] [<bold>{level}</bold>] - {name}:{function}:{line} - <level>{mess
 
 
 async def main():
+    shared.DOMAIN = os.getenv("DOMAIN", "0.0.0.0")
+    shared.URL = os.getenv("URL", "http://localhost:8000")
+
     app = FastAPI(
         title="Multiplayer Inline Games",
         routes=[
             Mount("/static", SafeStaticFiles(directory=static), name="static"),
+        ],
+        servers=[
+            {"url": shared.URL, "description": "Production environment"},
         ],
         docs_url=None,
         redoc_url=None,
@@ -54,9 +60,6 @@ async def main():
 
     shared.SALT = bytes.fromhex(os.getenv("SALT"))
     shared.SECRET = os.getenv("SECRET")
-
-    shared.DOMAIN = os.getenv("DOMAIN", "0.0.0.0")
-    shared.URL = os.getenv("URL", "http://localhost:8000")
 
     logger.info("Loading database...")
     await setup_database(
@@ -95,7 +98,12 @@ async def main():
     )
 
     Thread(
-        target=lambda: uvicorn.run(app, host=shared.DOMAIN, port=int(os.getenv("PORT", 8000))),
+        target=lambda: uvicorn.run(
+            app,
+            host=shared.DOMAIN,
+            port=int(os.getenv("PORT", 8000)),
+            proxy_headers=True,
+        ),
         daemon=True,
     ).start()
 
