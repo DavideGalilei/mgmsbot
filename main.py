@@ -55,6 +55,7 @@ async def main():
     shared.SALT = bytes.fromhex(os.getenv("SALT"))
     shared.SECRET = os.getenv("SECRET")
 
+    shared.DOMAIN = os.getenv("DOMAIN", "0.0.0.0")
     shared.URL = os.getenv("URL", "http://localhost:8000")
 
     logger.info("Loading database...")
