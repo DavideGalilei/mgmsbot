@@ -24,6 +24,9 @@ from application.utils.add_admin import add_admin
 from application.webapp.routes.game import game_router
 
 root = Path(__file__).parent.resolve(strict=True)
+data = root / "data"
+data.mkdir(parents=True, exist_ok=True)
+
 static = (root / "application" / "webapp" / "static").resolve(strict=True)
 
 FMT = "[{time}] [<bold>{level}</bold>] - {name}:{function}:{line} - <level>{message}</level>"
@@ -64,7 +67,7 @@ async def main():
     await setup_database(
         app,
         Settings(
-            database=Path.as_posix(root / "db.sqlite"),
+            database=Path.as_posix(data / "db.sqlite"),
             as_sqlite=True,
         ),
     )
