@@ -36,15 +36,20 @@ def _name(msg: Message) -> str:
     return user.first_name or user.title or "null"
 
 
+def start_command(message: Message, lang: str):
+    langs = {
+        "en": {
+            "text": "Welcome to this bot! Use me inline",
+            "keyboard": _(
+                Button("@ try me", "switch_inline_query_current_chat", "")
+            ),
+        }
+    }
+    return langs.get(lang) if lang in langs else langs["en"]
+
+
 strings = {
     "commands": {
-        "start": lambda message, lang: {
-            "en": {
-                "text": "Welcome to this bot! Use me inline",
-                "keyboard": _(
-                    Button("@ try me", "switch_inline_query_current_chat", "")
-                ),
-            }
-        }.get(lang or "en"),
+        "start": start_command,
     }
 }
