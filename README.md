@@ -1,7 +1,15 @@
 # mgmsbot
-This bot is fucking useless, nobody will ever use this if not for testing purposes.
-Allah contributed on the development of Uno, as well as his personal slave Muhhamad Saduk.
-No caterpillars were injured in the development of this bot.
 
+## Deploy
+- Clone the repo on your server using Github Deploy Keys.
+- Edit `.env`
 
-~ Markinim
+```shell
+cd mgmsbot
+git pull
+docker build -t mgmgsbot .
+docker run -itd -p 127.0.0.1:8081:8081 --restart=unless-stopped --name=mgms --env-file=.env -v data:data mgmsbot
+```
+
+- Setup certbot and nginx
+- Use `nginx.conf` (change your domain)
