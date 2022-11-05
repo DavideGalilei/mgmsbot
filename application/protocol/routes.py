@@ -47,7 +47,8 @@ async def websocket_endpoint(websocket: WebSocket, game_name: str, d: str):
         # logger.info("Closed connection: player is already playing")
         # return await websocket.close()
         # Kill old player connection
-        room.connections.pop(user_id)
+        logger.info("Kicked old player connection")
+        await room.kick(user_id)
 
     if user_id not in room.connections:
         # reconnecting
