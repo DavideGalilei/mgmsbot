@@ -114,6 +114,7 @@ class Room:
                 self.connections.pop(player.user.id)
 
             if (
+                player.connection is not None and
                 player.connection.application_state == WebSocketState.CONNECTED
                 and player.connection.client_state == WebSocketState.CONNECTED
             ):
