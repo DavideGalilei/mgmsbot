@@ -2,6 +2,8 @@ import asyncio
 import time
 from typing import Any, NamedTuple, Dict
 
+from application.utils.background_task import background
+
 
 class Entry(NamedTuple):
     timestamp: float
@@ -41,7 +43,7 @@ class Cache:
     @classmethod
     async def start_workers(cls):
         for worker in cls._workers:
-            asyncio.create_task(worker())
+            background(worker())
 
 
 async def cache_cleaner(cache: Cache, lifespan: int):
@@ -51,4 +53,4 @@ async def cache_cleaner(cache: Cache, lifespan: int):
                 cache.pop(user_id)
 
 
-asyncio.get_event_loop().create_task(Cache.start_workers())
+background(Cache.start_workers())

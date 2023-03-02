@@ -13,6 +13,7 @@ from starlette.websockets import WebSocketState
 
 from application.config.available_games import AVAILABLE_GAMES
 from application.protocol.protocol import Payload, Action
+from application.utils.background_task import background
 from application.utils.cache import Cache
 
 
@@ -67,7 +68,7 @@ class Room:
         self.players_cache = Cache({})
         self.last_activity = time.time()
 
-        # asyncio.create_task(room_cleaner(self))
+        # background(room_cleaner(self))
 
     def __str__(self):
         return f"Room(game={self.game_name!r}, connections={self.connections})"
@@ -89,7 +90,7 @@ class Room:
 
         async with self.lock:
             # if not player.is_playing:
-            #     asyncio.create_task(self.clean_inactive(player))
+            #     background(self.clean_inactive(player))
 
             self.players_cache[player.user.id] = player
 
@@ -170,4 +171,4 @@ class RoomManager:
                                 cls.rooms[game]["chats"].pop(chat)
 
 
-asyncio.get_event_loop().create_task(RoomManager.inactive_cleaner(every_seconds=60))
+background(RoomManager.inactive_cleaner(every_seconds=60))

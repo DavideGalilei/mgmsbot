@@ -6,6 +6,8 @@ from typing import Union
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
+from application.utils.background_task import background
+
 FLOODERS = filters.user()
 
 _users = defaultdict(list)
@@ -54,4 +56,4 @@ async def cleaner(
                 del users[user]
 
 
-asyncio.create_task(cleaner(users=_users))
+background(cleaner(users=_users))
