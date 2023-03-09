@@ -2,6 +2,7 @@
 
 ## Deploy
 - Clone the repo on your server using Github Deploy Keys.
+- Add the games in @BotFather
 - Edit `.env`
 
 ```shell
